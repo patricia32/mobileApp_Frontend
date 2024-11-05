@@ -102,12 +102,9 @@ export default function SignupScreen({navigation}) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.keyboardAvoidingView}
     >
-    
-      
-        <SafeAreaView style={styles.fullPage}>
+          <SafeAreaView style={styles.fullPage}>
 
           <StatusBar barStyle="dark-content" />
-          {/* <View style={styles.container}> */}
           <ScrollView
             ref={scrollViewRef}
             contentContainerStyle={styles.container}
@@ -225,7 +222,6 @@ export default function SignupScreen({navigation}) {
           </ScrollView>
 
         </SafeAreaView>
-      {/* </ScrollView>  */}
     
     </KeyboardAvoidingView>
   );
@@ -235,17 +231,12 @@ const styles = StyleSheet.create({
   keyboardAvoidingView: {
     flex: 1,
   },
-  // scrollContainer: {
-  //   flexGrow: 1,
-  //   justifyContent: 'center',
-  // },
   fullPage: {
     flex: 1,
     backgroundColor: '#fff',
     justifyContent: 'center',
   },
   container: {
-    // flex: 1,
     flexGrow: 1,
     backgroundColor: '#fff',
     justifyContent: 'center',

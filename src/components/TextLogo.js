@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, TextInput, View, TouchableOpacity, Button, SafeAreaView, StatusBar } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 
 export default function TextLogo() {
     return(

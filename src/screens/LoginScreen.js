@@ -43,7 +43,6 @@ export default function LoginScreen({ navigation }) {
     navigation.navigate('Feed'); 
   };
 
-  
   return (
     
     <SafeAreaView
@@ -136,8 +135,7 @@ export default function LoginScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
       </View>
-
-
+      
     </SafeAreaView>
   );
 }
