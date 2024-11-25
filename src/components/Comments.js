@@ -28,11 +28,16 @@ export default function Comments({ comments, onAddComment }) {
                         <View style={styles.commentList}>
                             {comments.map((comment, index) => (
                                 <View style={styles.photo_content}>
-                                    <Image style={styles.userProfilePic} source={require('../../assets/profilePic.png')} />
+                                    <TouchableOpacity>
+                                        <Image style={styles.userProfilePic} source={require('../../assets/profilePic.png')} />
+                                    </TouchableOpacity>
 
                                     <View key={index} style={styles.comment}>
                                         <View style={styles.name_date}>
-                                            <Text style={styles.commentUser}>{comment.commentUser}</Text>
+                                            <TouchableOpacity>
+                                                <Text style={styles.commentUser}>{comment.commentUser}</Text>
+                                            </TouchableOpacity>
+                                                
                                             <Text style={styles.commentDate}>{comment.date}</Text>
                                         </View>
                                         <Text style={styles.commentText}>{comment.commentText}</Text>

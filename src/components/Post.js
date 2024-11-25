@@ -68,7 +68,7 @@ export default function Post({ postData }) {
 
     return (
         <View style={styles.postContainer}>
-            <View style={styles.header}>
+            <TouchableOpacity style={styles.header}>
                 <Image 
                     style={styles.profilePic}
                     source={postData.profilePic} 
@@ -76,7 +76,7 @@ export default function Post({ postData }) {
                 <View style={styles.headerName}>
                     <Text style={styles.headerNameText}>{postData.userName}</Text>
                 </View>
-            </View>
+            </TouchableOpacity>
 
             <TouchableWithoutFeedback onPress={handleTap}>
                 <View>
@@ -185,8 +185,8 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         alignItems: 'center',
         marginBottom: 7,
-        marginTop: 7,
-        marginLeft: 7,
+        marginTop: 10,
+        marginLeft: 15,
     },
     profilePic: {
         width: 30,
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         zIndex: 1,
     },
-    // Comments modal styles
+    
     modalCommentsContainer: {
         flex: 1,
         justifyContent: 'flex-end',
@@ -247,6 +247,6 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 10,
         right: 10,
-        zIndex: 2, // Ensure the button is above other elements
+        zIndex: 2, 
     },
 });

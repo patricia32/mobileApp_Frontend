@@ -3,7 +3,7 @@ import { StyleSheet, Text, TextInput, View, SafeAreaView, StatusBar, ScrollView,
 import Footer from '../components/Footer';
 import FeedHeader from '../components/FeedHeader';
 import PostsList from '../components/PostsList';
-import Post from '../components/Post';
+import StoriesList from '../components/StoriesList';
 
 export default function FeedScreen({ navigation }) {
 
@@ -46,11 +46,10 @@ export default function FeedScreen({ navigation }) {
                     keyboardShouldPersistTaps="handled"
                 >
                     <View style={styles.stories}>
-                        <Text>Stories</Text>
+                        <StoriesList navigation={navigation}/>
                     </View>
 
                     <View style={styles.posts}>
-                        <Text>Feed Screen</Text>
                         <PostsList/>
                     </View>
 
@@ -75,11 +74,10 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
     },
     stories: {
-        flex: 0.15,
-        backgroundColor: '#ff0',
+        flex: 0.25,
     },
     posts: {
-      flex: 0.85,
+      flex: 0.75,
       backgroundColor: '#fff',
     },
 });  

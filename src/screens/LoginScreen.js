@@ -3,6 +3,8 @@ import { Image, StyleSheet, Text, TextInput, View, TouchableOpacity, Button, Saf
 import { Ionicons } from '@expo/vector-icons';
 import TextLogo from '../components/TextLogo';
 import FullWidthButton from '../components/FullWidthButton';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState(''); 
@@ -33,11 +35,11 @@ export default function LoginScreen({ navigation }) {
     if (emptyFieldsValidation()) 
       return;
 
-    const loginData = {
+    const loginUserData = {
       username: username,
       password: password,
     };
-    console.log(loginData);
+    console.log(loginUserData);
 
     
     navigation.navigate('Feed'); 

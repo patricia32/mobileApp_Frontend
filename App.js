@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import LoginScreen from './src/screens/LoginScreen'; // Ensure this path is correct
 import SignupScreen from './src/screens/SignupScreen';
 import FeedScreen from './src/screens/FeedScreen';
+import StoryScreen from './src/screens/StoryScreen';
 
 const Stack = createStackNavigator();
 
@@ -11,10 +12,10 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Feed">
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }}/>
-        <Stack.Screen name="Signup" component={SignupScreen} options={{ headerShown: false }}/>
-        <Stack.Screen name="Feed" component={FeedScreen} options={{ headerShown: false }}/>
-
+        <Stack.Screen name="Login"        component={LoginScreen}     options={{ headerShown: false }}/>
+        <Stack.Screen name="Signup"       component={SignupScreen}    options={{ headerShown: false }}/>
+        <Stack.Screen name="Feed"         component={FeedScreen}      options={{ headerShown: false }}/>
+        <Stack.Screen name="StoryScreen"  component={StoryScreen}     options={{ headerShown: false }}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,11 +1,32 @@
 import {StyleSheet, View, Text, Image} from 'react-native';
-import Feather from 'react-native-vector-icons/Feather';
-import MaterialComunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Post from './Post';
 
 
 export default function PostsList() {
     posts = [
+        {
+            profilePic: require('../../assets/corinaProfilePic.png'),
+            userName: 'Corina Dragotoniu',
+            postPhoto: require('../../assets/corinaPostImage.png'),
+            likes: [
+                {
+                    likeUser: 'User1',
+                },
+                {
+                    likeUser: 'User2',
+                },
+                {
+                    likeUser: 'User3',
+                }
+            ],
+            comments: [
+                {
+                    commentUser: 'User1',   
+                    commentText: 'This is the first comment',   
+                    date: '2024-09-01',
+                },
+            ]
+        },
         {
             profilePic: require('../../assets/profilePic.png'),
             userName: 'Post 1',
@@ -111,6 +132,39 @@ export default function PostsList() {
                     commentUser: 'User3',
                     commentText: 'Great post!',
                     date: '2024-09-08',
+                }
+            ]
+        },
+        {
+            profilePic: require('../../assets/profilePic.png'),
+            userName: 'Post 3',
+            postPhoto: require('../../assets/profilePic.png'),
+            likes: [
+                {
+                    likeUser: 'User1',
+                },
+                {
+                    likeUser: 'User2',
+                },
+                {
+                    likeUser: 'User3',
+                }
+            ],
+            comments: [
+                {
+                    commentUser: 'User1',
+                    commentText: 'This is the first comment',
+                    date: '2024-09-11',
+                },
+                {
+                    commentUser: 'User2',
+                    commentText: 'This is another comment',
+                    date: '2024-09-12',
+                },
+                {
+                    commentUser: 'User3',
+                    commentText: 'Great post!',
+                    date: '2024-09-13',
                 }
             ]
         }

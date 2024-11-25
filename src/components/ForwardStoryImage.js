@@ -1,22 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 
-export default function Likes({ likes }) {
+export default function ForwardStoryImage({ friends }) {
     return (
         <View style={styles.mainContainer}>
-            <View style={styles.likesContainer}>
+            <View style={styles.friendsContainer}>
                 <ScrollView
                     contentContainerStyle={styles.container}
                     keyboardShouldPersistTaps="handled"
                 >
-                    <View style={styles.likeList}>
-                        {likes.map((like, index) => (
+                    <View style={styles.friendsList}>
+                        {friends.map((friend, index) => (
                             <TouchableOpacity key={index} style={styles.photo_content}>
                                 <Image 
                                     style={styles.userProfilePic} 
                                     source={require('../../assets/profilePic.png')}
                                 />
-                                <Text style={styles.likeUser}>{like.likeUser}</Text>
+                                <Text style={styles.friendUser}>{friend.userName}</Text>
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -33,15 +33,15 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         padding: 10,
     },
-    likesContainer: {
+    friendContainer: {
         flex: 1,
     },
-    likesTitle: {
+    friendsTitle: {
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 10,
     },
-    likeList: {
+    friendsList: {
         flexGrow: 1,
     },
     photo_content: {
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         marginRight: 10,
     },
-    likeUser: {
+    friendUser: {
         fontWeight: 'bold',
         fontSize: 16,
     },
