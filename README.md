@@ -7,7 +7,7 @@ This app aims to provide an interactive experience similar to Instagram's, featu
 
 ## Key Features
 - **User Authentication**: Includes login and register screens, ensuring users can securely create accounts and access their profiles.
-- **Feed Screen**: Displays a list of posts with images, usernames, and profile pictures, simulating a social media feed.
+- **Feed Screen**: Displays a list of posts with images, usernames, and profile pictures, simulating a social media feed and a list of stories that can be appreciated and forwarded. You can navigate through the images by tapping in the left or right areas and each story post has its displaying time.
 - **Interactive Likes and Comments**: Users can like and comment on posts. Tapping on the likes or comments count opens a modal displaying all users who have interacted.
 
 ## 🚀 Technologies Used
