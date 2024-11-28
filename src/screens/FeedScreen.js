@@ -9,26 +9,6 @@ export default function FeedScreen({ navigation }) {
 
     const scrollViewRef = useRef(null);
 
-    const [showHeader, setShowHeader] = useState(true); // State to control the visibility of the header
-    const scrollY = useRef(new Animated.Value(0)).current; // To track the scroll position
-
-    // Handle the scroll event
-    const handleScroll = Animated.event(
-        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-        {
-            useNativeDriver: false,
-            listener: (event) => {
-                const currentOffset = event.nativeEvent.contentOffset.y;
-                if (currentOffset > 50) {
-                    setShowHeader(false); // Hide header when scrolling down
-                } else {
-                    setShowHeader(true); // Show header when scrolling up or on top
-                }
-            }
-        }
-    );
-
-
     return(
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -38,7 +18,7 @@ export default function FeedScreen({ navigation }) {
   
                 <StatusBar barStyle="dark-content" />
 
-                 {showHeader && <FeedHeader />}
+                <FeedHeader />
 
                 <ScrollView
                     ref={scrollViewRef}
@@ -55,7 +35,7 @@ export default function FeedScreen({ navigation }) {
 
                 </ScrollView>
                 
-                <Footer />
+                <Footer navigation={navigation} />
             </SafeAreaView>
         </KeyboardAvoidingView>
     );

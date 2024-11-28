@@ -1,5 +1,5 @@
 import {StyleSheet, View, Text, Image} from 'react-native';
-import Post from './Post';
+import PostFeed from './PostFeed';
 
 
 export default function PostsList() {
@@ -172,7 +172,7 @@ export default function PostsList() {
     return(
         <View >
             {posts.map((postData, index) => {
-                return <Post key={index} postData={postData} />
+                return <PostFeed key={index} postData={postData} />
             })}
         </View>
     );
