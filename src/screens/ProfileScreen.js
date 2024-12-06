@@ -1,19 +1,24 @@
-import { Dimensions, SafeAreaView, StyleSheet, Text, KeyboardAvoidingView, StatusBar, Platform, View, Image, TouchableOpacity, Modal } from "react-native";
-import React, {useCallback} from "react";
+import { Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, KeyboardAvoidingView, StatusBar, Platform, View, Image, TouchableOpacity, Modal, Button } from "react-native";
+import React, {useCallback, useRef} from "react";
 import Footer from "../components/Footer";
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import Likes from "../components/Likes";
+import FullWidthButton from "../components/FullWidthButton";
 
 
-export default function ProfileScreen({ navigation }) {
-    const loggedInUser = {
+export default function ProfileScreen({ navigation, route }) {
+    const { loggedInUserID, accessedProfileUserID } = route.params;
+    console.log('Profile Screen', loggedInUserID, accessedProfileUserID);
+
+    
+
+        // Fetch user content from the server using the accessedProfileUserID
+    const userContent = {
+        userId: 1,
         username: 'patricia32',
         bio: 'This is a test bio',
         profilePic: 'https://picsum.photos/201',
-        postsNo: 0,
-        followingNo: 10,
-        followersNo: 13,
         posts: [
             {
                 postId: 1,
@@ -83,10 +88,10 @@ export default function ProfileScreen({ navigation }) {
             }],
     };
 
-
+    const scrollViewRef = useRef(null);
     const [modalSettings, setModalSettings] = React.useState(false);
     const [modalType, setModalType] = React.useState(false); // followers and following
-    const postsRowsNo = Math.ceil(loggedInUser.posts.length / 3);
+    const postsRowsNo = Math.ceil(userContent.posts.length / 3);
     
 
     const handleSettingsButton = () => {
@@ -103,6 +108,7 @@ export default function ProfileScreen({ navigation }) {
     };
 
     const handleLogOut = () => {
+        setModalSettings(false);
         navigation.navigate('Login');
     };
 
@@ -122,6 +128,13 @@ export default function ProfileScreen({ navigation }) {
         setModalType(false);
     }, []);
 
+    const handleOpenPost = (userId, postId) => {
+        console.log('Post opened');
+        const openPostData = { userId, postId, loggedInUserID };
+        console.log('handle open post', loggedInUserID)
+        navigation.navigate('PostScreen', openPostData);
+    }
+
     return(
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -131,13 +144,18 @@ export default function ProfileScreen({ navigation }) {
 
                 <StatusBar barStyle="dark-content" />
 
+                <ScrollView
+                    ref={scrollViewRef}
+                    contentContainerStyle={styles.container}
+                    keyboardShouldPersistTaps="handled"
+                >
                 {/* Top Area */}
                 <View style={styles.topAreaContainer}>
 
                     {/* Header */}
                     <View style={styles.header}>
                         <View style={styles.leftSideHeader}>
-                            <Text style={styles.usernameFont}>{loggedInUser.username} </Text>
+                            <Text style={styles.usernameFont}>{userContent.username} </Text>
                         </View>
                         <View style={styles.rightSideHeader}>
                             <TouchableOpacity onPress={handleSettingsButton}>
@@ -175,30 +193,46 @@ export default function ProfileScreen({ navigation }) {
 
                     {/* Profile Info */}
                     <View style={styles.profileInfo}>
+
+                        {/* Profile Picture Left Side */}
                         <View style={styles.profilePicArea}>
                             <Image 
                                 style={styles.profilePic}
-                                source={{ uri:loggedInUser.profilePic} }
+                                source={{ uri:userContent.profilePic} }
                             />
                         </View>
-                        <View style={styles.userFollowing}>
-                            <View style={styles.posts}>
-                                <Text  style={styles.headerText}>{loggedInUser.postsNo}</Text>
-                                <Text  style={styles.headerText}>Posts</Text>
-                            </View>
-                            <TouchableOpacity style={styles.followers} onPress={handleFollowers}>
-                                <Text style={styles.headerText}>{loggedInUser.followers.length}</Text>
-                                <Text style={styles.headerText}>Followers</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.following} onPress={handleFollowing}>
-                                <Text  style={styles.headerText}>{loggedInUser.following.length}</Text>
-                                <Text  style={styles.headerText}>Following</Text>
-                            </TouchableOpacity>
-                        </View>
+
+                        {/* Profile Info Right Side */}
+                        <View style={styles.profileInfoRightSide}>
+                            <View style={styles.userFollowing}>
+                                <View style={styles.posts}>
+                                    <Text  style={styles.headerText}>{userContent.posts.length}</Text>
+                                    <Text  style={styles.headerText}>Posts</Text>
+                                </View>
+                                <TouchableOpacity style={styles.followers} onPress={handleFollowers}>
+                                    <Text style={styles.headerText}>{userContent.followers.length}</Text>
+                                    <Text style={styles.headerText}>Followers</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.following} onPress={handleFollowing}>
+                                    <Text  style={styles.headerText}>{userContent.following.length}</Text>
+                                    <Text  style={styles.headerText}>Following</Text>
+                                </TouchableOpacity>
+
+                                </View>
+                                {loggedInUserID !== accessedProfileUserID && (
+                                    <View style={styles.buttons}>
+                                    
+                                            <FullWidthButton text="Follow"/>
+                                            <FullWidthButton text="Message" />
+                                
+                                    </View>
+                                )}
+                                </View>
+
                     </View>
 
                     <View style={styles.bioArea}>
-                        <Text style={styles.bio}>{loggedInUser.bio}</Text>
+                        <Text style={styles.bio}>{userContent.bio}</Text>
                     </View>
 
                 </View>
@@ -216,8 +250,8 @@ export default function ProfileScreen({ navigation }) {
                                 <Feather name="x" size={24} color="black" />
                             </TouchableOpacity>
                             <Text style={styles.modalFollowTitle}>{modalType}</Text>
-                            {modalType === 'followers' && (<Likes likes={loggedInUser.followers} />)}
-                            {modalType === 'following' && (<Likes likes={loggedInUser.following} />)}
+                            {modalType === 'followers' && (<Likes likes={userContent.followers} />)}
+                            {modalType === 'following' && (<Likes likes={userContent.following} />)}
                             
                         </View>
                     </View>
@@ -228,23 +262,29 @@ export default function ProfileScreen({ navigation }) {
                 <View style={styles.contentAreaContainer}>
                     {Array.from({ length: postsRowsNo }).map((_, indexRow) => (
                         <View key={indexRow} style={styles.postsRows}>
-                            {Array.from({ length: loggedInUser.posts.length - 3 * indexRow }).map((_, index) => (
-                                <View style={styles.post}>
-                                    <TouchableOpacity>
-                                        <View style={styles.postPictureArea}>
+                           
+                        
+                           {userContent.posts.slice(indexRow * 3, indexRow * 3 + 3).map((post, index) => (
+                                <View key={post.postId} style={styles.post}>
+                                    <View style={styles.postPictureArea}>
+                                        <TouchableOpacity onPress={() => handleOpenPost(userContent.userId, post.postId)}>
                                             <Image
                                                 style={styles.postImage}
-                                                source={{ uri: loggedInUser.posts[indexRow*3 + index].postImage }}
+                                                source={{ uri: post.postImage }}
                                             />
-                                        </View>
-                                    </TouchableOpacity>
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
                             ))}
+
+
+
                         </View>
                     ))}
                 </View>
-
-                <Footer navigation={navigation} />
+                </ScrollView>
+                <Footer navigation={navigation} loggedInUserID={loggedInUserID} />
+                
             </SafeAreaView>
         </KeyboardAvoidingView>
     )
@@ -260,12 +300,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
       },
     topAreaContainer: {
-        flex: 0.25,
+        flex: 0.35,
         borderBottomWidth: 0.4, 
         borderColor: '#d3d3d3',
     },
     contentAreaContainer: {
-        flex: 0.75,
+        flex: 0.65,
     },
     header: {
         flex: 0.20,
@@ -286,7 +326,6 @@ const styles = StyleSheet.create({
         flex: 0.1,
         justifyContent: 'center',
     },
-
     profileInfo: {
         flex: 0.60,
         flexDirection: 'row',
@@ -298,10 +337,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     profilePic: {
-        width: 110,
-        height: 110,
+        width: 100,
+        height: 100,
         borderRadius: 60,
         backgroundColor: 'lightcoral',
+    },
+    profileInfoRightSide: {
+        flex: 0.65,
+        flexDirection: 'rows',
+        // justifyContent: 'space-around',
+        alignItems: 'center',
     },
     userFollowing: {
         flex: 0.65,
@@ -312,6 +357,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center', 
         fontWeight: 'bold',
+    },
+    buttons: {
+        flex: 0.5,
+        width: '50%',
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
     },
     posts: {
         flex: 0.33,
@@ -334,6 +386,8 @@ const styles = StyleSheet.create({
         flex: 0.2,
         justifyContent: 'center',
         marginLeft: 15,
+        marginBottom: 10,
+        marginTop: 10,
     },
     bio: {
         fontSize: 15,

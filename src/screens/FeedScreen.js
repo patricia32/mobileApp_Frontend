@@ -5,8 +5,8 @@ import FeedHeader from '../components/FeedHeader';
 import PostsList from '../components/PostsList';
 import StoriesList from '../components/StoriesList';
 
-export default function FeedScreen({ navigation }) {
-
+export default function FeedScreen({ navigation, route }) {
+    const { loggedInUserID } = route.params; // Extragem parametrii din route.params
     const scrollViewRef = useRef(null);
 
     return(
@@ -30,12 +30,12 @@ export default function FeedScreen({ navigation }) {
                     </View>
 
                     <View style={styles.posts}>
-                        <PostsList/>
+                        <PostsList navigation={navigation} loggedInUserID={loggedInUserID}/>
                     </View>
 
                 </ScrollView>
                 
-                <Footer navigation={navigation} />
+                <Footer navigation={navigation} loggedInUserID={loggedInUserID} />
             </SafeAreaView>
         </KeyboardAvoidingView>
     );

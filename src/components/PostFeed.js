@@ -4,14 +4,15 @@ import Feather from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Comments from './Comments';
 import Likes from './Likes';
+import Icon from 'react-native-vector-icons/Feather';
 
-export default function Post({ postData }) {
+export default function Post({ navigation, postData, loggedInUserID }) {
     const [heartVisible, setHeartVisible] = useState(false);
     const [modalType, setModalType] = useState(null); 
     const [scaleValue] = useState(new Animated.Value(1));
     const [footerHeartColor, setFooterHeartColor] = useState('black'); 
     const tapCount = useRef(0);
-    const tapTimeout = useRef(null);
+    const tapTimeout = useRef(null);   
 
     const handleTap = useCallback(() => {
         tapCount.current += 1;
@@ -52,6 +53,11 @@ export default function Post({ postData }) {
         setModalType(modalType === 'comments' ? null : 'comments');
     }, [modalType]);
 
+    const handleSettingsButton = useCallback(() => {
+        console.log(loggedInUserID)
+        console.log(postData.userID)
+    }, []);
+    
     const handleViewLikes = useCallback(() => {
         setModalType(modalType === 'likes' ? null : 'likes');
     }, [modalType]);
@@ -66,18 +72,30 @@ export default function Post({ postData }) {
         };
     }, []);
 
+    const redirectToUserProfile = () => {
+        console.log('Redirect to user profile');
+        navigation.navigate('Profile', { loggedInUserID, accessedProfileUserID: postData.userID });
+    }
+
     return (
         <View style={styles.postContainer}>
-            <TouchableOpacity style={styles.header}>
-                <Image 
-                    style={styles.profilePic}
-                    source={postData.profilePic} 
-                />
-                <View style={styles.headerName}>
-                    <Text style={styles.headerNameText}>{postData.userName}</Text>
-                </View>
-            </TouchableOpacity>
+            <View style={styles.header}>
+                <TouchableOpacity style={styles.headerLeft} onPress={redirectToUserProfile}>
+                    <Image 
+                        style={styles.profilePic}
+                        source={postData.profilePic} 
+                    />
+                    <View style={styles.headerName}>
+                        <Text style={styles.headerNameText}>{postData.userName}</Text>
+                    </View>
+                </TouchableOpacity>
 
+                {postData.userID === loggedInUserID && (
+                    <TouchableOpacity style={styles.headerRight} onPress={handleSettingsButton}>
+                        <Icon name="more-horizontal" size={25} color="black" />
+                    </TouchableOpacity>
+                )}
+            </View>
             <TouchableWithoutFeedback onPress={handleTap}>
                 <View>
                     <Image 
@@ -182,11 +200,20 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'flex-start',
+        // justifyContent: 'flex-start',
         alignItems: 'center',
         marginBottom: 7,
         marginTop: 10,
         marginLeft: 15,
+    },
+    headerLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 0.9,
+    },
+    headerRight: {
+        marginLeft: 'auto',
+        flex: 0.1,
     },
     profilePic: {
         width: 30,

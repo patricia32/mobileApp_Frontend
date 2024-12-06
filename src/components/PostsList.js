@@ -2,10 +2,11 @@ import {StyleSheet, View, Text, Image} from 'react-native';
 import PostFeed from './PostFeed';
 
 
-export default function PostsList() {
+export default function PostsList({navigation, loggedInUserID}) {
     posts = [
         {
             profilePic: require('../../assets/corinaProfilePic.png'),
+            userID: 2,
             userName: 'Corina Dragotoniu',
             postPhoto: require('../../assets/corinaPostImage.png'),
             likes: [
@@ -29,6 +30,7 @@ export default function PostsList() {
         },
         {
             profilePic: require('../../assets/profilePic.png'),
+            userID: 3,
             userName: 'Post 1',
             postPhoto: require('../../assets/portraitPostPic.png'),
             likes: [
@@ -107,6 +109,7 @@ export default function PostsList() {
         },
         {
             profilePic: require('../../assets/profilePic.png'),
+            userID: 4,
             userName: 'Post 2',
             postPhoto: require('../../assets/postPic.png'),
             likes: [
@@ -137,6 +140,7 @@ export default function PostsList() {
         },
         {
             profilePic: require('../../assets/profilePic.png'),
+            userID: 5,
             userName: 'Post 3',
             postPhoto: require('../../assets/profilePic.png'),
             likes: [
@@ -172,7 +176,7 @@ export default function PostsList() {
     return(
         <View >
             {posts.map((postData, index) => {
-                return <PostFeed key={index} postData={postData} />
+                return <PostFeed key={index} navigation={navigation} postData={postData} loggedInUserID={loggedInUserID} />
             })}
         </View>
     );
