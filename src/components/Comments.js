@@ -1,8 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 
-export default function Comments({ comments, onAddComment }) {
+export default function Comments({ navigation, route, closeModal, comments, onAddComment }) {
     const [newComment, setNewComment] = useState('');
+    const {  loggedInUserID } = route.params;
+
     const scrollViewRef = useRef(null);
 
 
@@ -12,6 +14,11 @@ export default function Comments({ comments, onAddComment }) {
             setNewComment(''); 
         }
     };
+
+    const redirectToProfile = (username) => {
+        closeModal();
+        navigation.navigate('Profile', {loggedInUserID, accessedProfileUserID: username});
+    }
 
     return (
         <View style={styles.mainContainer}>
@@ -25,44 +32,54 @@ export default function Comments({ comments, onAddComment }) {
                         contentContainerStyle={styles.container}
                         keyboardShouldPersistTaps="handled"
                     >
-                        <View style={styles.commentList}>
-                            {comments.map((comment, index) => (
-                                <View style={styles.photo_content}>
-                                    <TouchableOpacity>
-                                        <Image style={styles.userProfilePic} source={require('../../assets/profilePic.png')} />
-                                    </TouchableOpacity>
+                    <View style={styles.commentList}>
+                        {comments.map((comment, index) => (
+                            <View style={styles.photo_content}>
+                                <TouchableOpacity onPress={() => redirectToProfile(comment.userUsername)} >
+                                    <Image style={styles.userProfilePic} source={{uri:comment.profilePicPath}} />
+                                </TouchableOpacity>
 
-                                    <View key={index} style={styles.comment}>
-                                        <View style={styles.name_date}>
-                                            <TouchableOpacity>
-                                                <Text style={styles.commentUser}>{comment.commentUser}</Text>
-                                            </TouchableOpacity>
-                                                
-                                            <Text style={styles.commentDate}>{comment.date}</Text>
-                                        </View>
-                                        <Text style={styles.commentText}>{comment.commentText}</Text>
+                                <View key={index} style={styles.comment}>
+                                    <View style={styles.name_date}>
+                                        <TouchableOpacity onPress={() => redirectToProfile(comment.userUsername)}>
+                                            <Text style={styles.commentUser}>{comment.userUsername}</Text>
+                                        </TouchableOpacity>
+            
+                                        <Text style={styles.commentDate}>
+                                            {new Date(comment.date).toLocaleString('en-US', {
+                                                day: 'numeric',
+                                                month: 'long',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                            })}
+                                        </Text>
+
                                     </View>
+                                    <Text style={styles.commentText}>{comment.commentText}</Text>
                                 </View>
-                            ))}
-                        </View>
-
-                            </ScrollView>
-                        </KeyboardAvoidingView>
-                        <View style={styles.newCommentContainer}>
-                            <Image style={styles.userProfilePic} source={require('../../assets/profilePic.png')} />
-                            <TextInput
-                                style={styles.commentField}
-                                placeholder="Add a comment..."
-                                value={newComment}
-                                onChangeText={text => setNewComment(text)}
-                                onSubmitEditing={handleCommentSubmit} 
-                            />
-                            <TouchableOpacity onPress={handleCommentSubmit}>
-                                <Text style={styles.submitButton}>Post</Text>
-                            </TouchableOpacity>
-                        </View>
+                            </View>
+                        ))}
                     </View>
+
+                </ScrollView>
+            </KeyboardAvoidingView>
+
+            <View style={styles.newCommentContainer}>
+                <Image style={styles.userProfilePic} source={require('../../assets/profilePic.png')} />
+                <TextInput
+                    style={styles.commentField}
+                    placeholder="Add a comment..."
+                    value={newComment}
+                    onChangeText={text => setNewComment(text)}
+                    onSubmitEditing={handleCommentSubmit} 
+                />
+                <TouchableOpacity onPress={handleCommentSubmit}>
+                    <Text style={styles.submitButton}>Post</Text>
+                </TouchableOpacity>
+            </View>
         </View>
+    </View>
     );
 }
 

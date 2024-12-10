@@ -7,6 +7,16 @@ import Likes from './Likes';
 import Icon from 'react-native-vector-icons/Feather';
 
 export default function Post({ navigation, postData, loggedInUserID }) {
+
+    const [postDataInstance, setPostDataInstance] = useState(postData[0]);
+    const [postLikesNo, setPostLikesNo] = useState(0);
+    const [postCommentsNo, setPostCommentsNo] = useState(0);
+    const [likesList, setLikesList] = useState([]);
+    const [commentsList, setCommentsList] = useState([]);
+
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
     const [heartVisible, setHeartVisible] = useState(false);
     const [modalType, setModalType] = useState(null); 
     const [scaleValue] = useState(new Animated.Value(1));
@@ -49,33 +59,95 @@ export default function Post({ navigation, postData, loggedInUserID }) {
         setFooterHeartColor(prevColor => (prevColor === 'black' ? 'red' : 'black'));
     }, []);
 
-    const handleCommentButton = useCallback(() => {
-        setModalType(modalType === 'comments' ? null : 'comments');
-    }, [modalType]);
-
     const handleSettingsButton = useCallback(() => {
-        console.log(loggedInUserID)
-        console.log(postData.userID)
+   
     }, []);
     
-    const handleViewLikes = useCallback(() => {
-        setModalType(modalType === 'likes' ? null : 'likes');
+
+    // Fetch likes 
+    const handleViewLikes = useCallback( async () => {
+        try{
+            const response = await fetch(`http://192.168.1.129:5000/post/getLikes?postID=${postDataInstance.postID}`);
+            const likes = await response.json();
+
+            if(response.ok)
+                setLikesList(likes);
+            else
+                setError(likes.error || 'An error occurred');
+        } catch(err){
+            setError('Network error');
+        } finally {
+            setModalType(modalType === 'likes' ? null : 'likes');
+        }
     }, [modalType]);
+
+
+    // Fetch comments 
+    const handleCommentButton = useCallback( async () => {
+        try{
+            const response = await fetch(`http://192.168.1.129:5000/post/getComments?postID=${postDataInstance.postID}`);
+            const comments = await response.json();
+
+            if(response.ok)
+                setCommentsList(comments);
+            else
+                setError(comments.error || 'An error occurred');
+        } catch(err){
+            setError('Network error');
+        } finally {
+            setModalType(modalType === 'comments' ? null : 'comments');
+        }
+    }, [modalType]);
+
 
     const closeModal = useCallback(() => {
         setModalType(null);
     }, []);
 
+    // Fetch post likes and comments numbers
+    const getPostLikesAndCommentsNo = async () => {
+        try {
+            const response = await fetch(`http://192.168.1.129:5000/post/getLikesNumber?postID=${postDataInstance.postID}`);
+            const likesNo = await response.json();
+
+            if (response.ok) {
+                setPostLikesNo(likesNo.likesNumber);
+
+                try{
+                    const response = await fetch(`http://192.168.1.129:5000/post/getCommentsNumber?postID=${postDataInstance.postID}`);
+                    const commentsNo = await response.json();
+
+                    if(response.ok)
+                        setPostCommentsNo(commentsNo.commentsNumber);
+                    else
+                        setError(commentsNo.error || 'An error occurred');
+                } catch(err){
+                    setError('Network error');
+                } 
+            }
+            else
+                setError(likesNo.error || 'An error occurred');
+        } catch (err) {
+            setError('Network error');
+        } finally {
+            setLoading(false);
+        }
+    }
+
     useEffect(() => {
+        getPostLikesAndCommentsNo();
+
         return () => {
             clearTimeout(tapTimeout.current);
         };
     }, []);
 
     const redirectToUserProfile = () => {
-        console.log('Redirect to user profile');
-        navigation.navigate('Profile', { loggedInUserID, accessedProfileUserID: postData.userID });
+        navigation.navigate('Profile', { loggedInUserID, accessedProfileUserID: postDataInstance.userUsername });
     }
+
+    if (loading) return <Text>Loading...</Text>;
+    if (error) return <Text>Error: {error}</Text>;
 
     return (
         <View style={styles.postContainer}>
@@ -83,14 +155,15 @@ export default function Post({ navigation, postData, loggedInUserID }) {
                 <TouchableOpacity style={styles.headerLeft} onPress={redirectToUserProfile}>
                     <Image 
                         style={styles.profilePic}
-                        source={postData.profilePic} 
+                        source={{uri: postDataInstance.profilePicPath}} 
                     />
+                    
                     <View style={styles.headerName}>
-                        <Text style={styles.headerNameText}>{postData.userName}</Text>
+                        <Text style={styles.headerNameText}>{postDataInstance.userUsername}</Text>
                     </View>
                 </TouchableOpacity>
 
-                {postData.userID === loggedInUserID && (
+                {postDataInstance.userUsername === loggedInUserID && (
                     <TouchableOpacity style={styles.headerRight} onPress={handleSettingsButton}>
                         <Icon name="more-horizontal" size={25} color="black" />
                     </TouchableOpacity>
@@ -98,9 +171,9 @@ export default function Post({ navigation, postData, loggedInUserID }) {
             </View>
             <TouchableWithoutFeedback onPress={handleTap}>
                 <View>
-                    <Image 
+                     <Image 
                         style={styles.postPhoto}
-                        source={postData.postPhoto} 
+                        source={{ uri:postDataInstance.postPhotoPath} }
                     />
                     
                     {heartVisible && (
@@ -110,6 +183,7 @@ export default function Post({ navigation, postData, loggedInUserID }) {
                     )}
                 </View>
             </TouchableWithoutFeedback>
+
 
             <View style={styles.footer}>
                 <TouchableOpacity onPress={handleHeartButton} accessibilityLabel="Like post">
@@ -137,15 +211,28 @@ export default function Post({ navigation, postData, loggedInUserID }) {
                 <Feather name="send" size={27} color="black" style={{ marginLeft: 12 }} />
             </View>
 
+            <View style={styles.descriptionContainer}>
+                <Text style={styles.descriptionText}>{postDataInstance.postDescription}</Text>
+                <Text style={styles.timestampText}>
+                    {new Date(postDataInstance.createdAt).toLocaleString('en-US', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    })}
+                </Text>
+            </View>
+
             <View style={styles.postInteractions}>
-                {postData.likes.length !== 0 && (
+                {postLikesNo !== 0 && (
                     <TouchableOpacity onPress={handleViewLikes} accessibilityLabel="View likes">
-                        <Text style={{ marginBottom: 4, fontWeight: 'bold' }}>{postData.likes.length} likes</Text>
+                        <Text style={{ marginBottom: 4, fontWeight: 'bold' }}>{postLikesNo} likes</Text>
                     </TouchableOpacity>
                 )}
-                {postData.comments.length !== 0 && (
+                {postCommentsNo !== 0 && (
                     <TouchableOpacity onPress={handleCommentButton} accessibilityLabel="View comments">
-                        <Text style={{ marginBottom: 4, fontWeight: 'bold' }}>{postData.comments.length} comments</Text>
+                        <Text style={{ marginBottom: 4, fontWeight: 'bold' }}>{postCommentsNo} comments</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -164,7 +251,12 @@ export default function Post({ navigation, postData, loggedInUserID }) {
                                 <Feather name="x" size={24} color="black" />
                             </TouchableOpacity>
                             <Text style={styles.modalCommentTitle}>Comments</Text>
-                            <Comments comments={postData.comments} />
+                            <Comments
+                                        navigation={navigation}
+                                        route={{ params: { loggedInUserID } }} 
+                                        comments={commentsList}
+                                        closeModal={closeModal} 
+                            />
                         </View>
                     </View>
                 </Modal>
@@ -184,7 +276,13 @@ export default function Post({ navigation, postData, loggedInUserID }) {
                                 <Feather name="x" size={24} color="black" />
                             </TouchableOpacity>
                             <Text style={styles.modalCommentTitle}>Likes</Text>
-                            <Likes likes={postData.likes} />
+                            <Likes
+                                        navigation={navigation}
+                                        route={{ params: { loggedInUserID } }} 
+                                        usersList={likesList} 
+                                        closeModal={closeModal} 
+                            />
+                            
                         </View>
                     </View>
                 </Modal>
@@ -200,7 +298,6 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
-        // justifyContent: 'flex-start',
         alignItems: 'center',
         marginBottom: 7,
         marginTop: 10,
@@ -231,6 +328,23 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 400,
     },
+
+    descriptionContainer: {
+        padding: 10,
+        marginLeft: 5,
+    },
+    descriptionText: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#333',
+        marginBottom: 5,
+    },
+    timestampText: {
+        fontSize: 12,
+        fontWeight: '300',
+        color: '#777',
+    },
+
     footer: {
         flexDirection: 'row',
         justifyContent: 'flex-start',

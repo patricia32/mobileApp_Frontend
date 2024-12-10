@@ -34,9 +34,9 @@ export default function LoginScreen({ navigation }) {
     if (emptyFieldsValidation()) 
       return;
 
-    const loggedInUserID = 1; //// fetch from server
+    const loggedInUserID = 'Patri'; //// fetch from server
 
-    navigation.navigate('Feed', {loggedInUserID}); 
+    navigation.navigate('Profile', {loggedInUserID}); 
 
   };
 

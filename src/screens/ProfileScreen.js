@@ -1,101 +1,109 @@
-import { Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, KeyboardAvoidingView, StatusBar, Platform, View, Image, TouchableOpacity, Modal, Button } from "react-native";
-import React, {useCallback, useRef} from "react";
+import { Dimensions, SafeAreaView, ScrollView, StyleSheet, onPress, Text, KeyboardAvoidingView, StatusBar, Platform, View, Image, TouchableOpacity, Modal, Button } from "react-native";
+import React, {useCallback, useRef, useState, useEffect} from "react";
 import Footer from "../components/Footer";
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import Likes from "../components/Likes";
-import FullWidthButton from "../components/FullWidthButton";
 
-
-export default function ProfileScreen({ navigation, route }) {
+export default function  ProfileScreen({ navigation, route }) {
     const { loggedInUserID, accessedProfileUserID } = route.params;
-    console.log('Profile Screen', loggedInUserID, accessedProfileUserID);
+    let currentProfileUsername = ''; 
+        if(loggedInUserID === accessedProfileUserID || accessedProfileUserID === undefined)
+            currentProfileUsername = loggedInUserID;
+        else
+        currentProfileUsername = accessedProfileUserID;
 
+    console.log('Profile Screen rendering ', loggedInUserID, accessedProfileUserID);
+
+    const [userContent, setUserContent] = useState(null);
+    const [userFollowingListLength, setUserFollowingListLength] = useState(null);
+    const [userFollowersListLength, setUserFollowersListLength] = useState(null); 
+    const [followingList, setFollowingList] = useState(null);
+    const [followersList, setFollowersList] = useState(null);
+
+    const [posts, setPosts] = useState(null);
+
+
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+
+    const fetchUserProfile = async () => {
+        
+
+        console.log('fetchUserProfile ', currentProfileUsername);
+        // Fetch user profile data from the server
+        try {
+            const response = await fetch(`http://192.168.1.129:5000/getUserProfile?username=${currentProfileUsername}`);
+            const data = await response.json();
     
+            if (response.ok) {
+                setUserContent(data);  
 
-        // Fetch user content from the server using the accessedProfileUserID
-    const userContent = {
-        userId: 1,
-        username: 'patricia32',
-        bio: 'This is a test bio',
-        profilePic: 'https://picsum.photos/201',
-        posts: [
-            {
-                postId: 1,
-                postImage: 'https://picsum.photos/201',
-            },
-            {
-                postId: 2,  
-                postImage: 'https://picsum.photos/202',
-            },
-            {
-                postId: 3,
-                postImage: 'https://picsum.photos/203',
-            },
-            {
-                postId: 4,
-                postImage: 'https://picsum.photos/204',
-            },
-            {
-                postId: 5,
-                postImage: 'https://picsum.photos/205',
-            },
-            {
-                postId: 6,
-                postImage: 'https://picsum.photos/206',
-            },
-            {
-                postId: 7,
-                postImage: 'https://picsum.photos/207',
-            }
-        ],
-        followers: [
-            {
-                userId: 1,
-                likeUser: 'user1',
-                profilePic: 'https://picsum.photos/201',
-            },
-            {
-                userId: 2,
-                likeUser: 'user2',
-                profilePic: 'https://picsum.photos/202',
-            },
-            {
-                userId: 3,
-                likeUser: 'user3',
-                profilePic: 'https://picsum.photos/203',
-            },
-            {
-                userId: 4,
-                likeUser: 'user4',
-                profilePic: 'https://picsum.photos/204',
-            }],
-        following: [
-            {
-                userId: 1,
-                likeUser: 'user1',
-                profilePic: 'https://picsum.photos/201',
-            },
-            {
-                userId: 2,
-                likeUser: 'user2',
-                profilePic: 'https://picsum.photos/202',
-            },
-            {
-                userId: 3,
-                likeUser: 'user3',
-                profilePic: 'https://picsum.photos/203',
-            }],
+                // Fetch user's following list length 
+                try {
+                    const response = await fetch(`http://192.168.1.129:5000/getUserFollowingListLength?username=${currentProfileUsername}`);
+                    const dataFollowing = await response.json();
+
+                    if (response.ok)
+                        setUserFollowingListLength(dataFollowing.followingListLength);
+                    else
+                        setError(dataFollowing.error || 'An error occurred');
+
+                } catch (err) {
+                    setError('Network error');
+                }
+
+                // Fetch user's followers list length
+                try {
+                    const response = await fetch(`http://192.168.1.129:5000/getUserFollowersListLength?username=${currentProfileUsername}`);
+                    const dataFollowers = await response.json();
+
+                    if (response.ok)
+                        setUserFollowersListLength(dataFollowers.followersListLength);
+                    else
+                        setError(dataFollowers.error || 'An error occurred');
+
+                } catch (err) {
+                    setError('Network error');
+                }
+
+
+                // Fetch user posts data from the server
+                try {
+                    const response = await fetch(`http://192.168.1.129:5000/getUserPosts_id_and_photoPath?username=${currentProfileUsername}`);
+                    const dataPosts = await response.json();
+        
+                    if (response.ok) 
+                        setPosts(dataPosts);  
+                    else 
+                        setError(dataPosts.error || 'An error occurred');  
+                
+                } catch (err) {
+                    setError('Network error');  
+                }
+                
+            } else 
+                setError(data.error || 'An error occurred');  
+            
+        } catch (err) {
+            setError('Network error'); 
+        } finally {
+            setLoading(false);  
+        }
     };
+    
+    useEffect(() => {
+        fetchUserProfile();
+    }, [currentProfileUsername]);  
+    
 
     const scrollViewRef = useRef(null);
     const [modalSettings, setModalSettings] = React.useState(false);
     const [modalType, setModalType] = React.useState(false); // followers and following
-    const postsRowsNo = Math.ceil(userContent.posts.length / 3);
     
 
     const handleSettingsButton = () => {
-        console.log('Settings button pressed');
         setModalSettings(true);
     };
 
@@ -112,29 +120,61 @@ export default function ProfileScreen({ navigation, route }) {
         navigation.navigate('Login');
     };
 
-    const handleFollowers = () => {
+    // Fetch followers list
+    const handleFollowers = async () => {
+        setLoading(true);  
+        try{
+            const response = await fetch(`http://192.168.1.129:5000/getUserFollowersList?username=${currentProfileUsername}`);
+            const data = await response.json();
+            if (response.ok) {
+                const arrayData = Array.isArray(data) ? data : [data];
+                setFollowersList(arrayData);
+            }
+             else 
+                setError(data.error || 'An error occurred');  
+            
+        } catch (err) {
+            setError('Network error');
+        } finally {
+            setLoading(false);
+        }
         setModalType('followers')
-        // get followers users
-        console.log('Followers button pressed');
     };
 
-    const handleFollowing = () => {
+    const handleFollowing = async () => {
+    
+        setLoading(true);
+        // Fetch following list
+        try{
+            const response = await fetch(`http://192.168.1.129:5000/getUserFollowingList?username=${currentProfileUsername}`);
+            const data = await response.json();
+            if (response.ok) {
+                const arrayData = Array.isArray(data) ? data : [data];
+                setFollowingList(arrayData);
+            }
+             else 
+                setError(data.error || 'An error occurred');  
+            
+        } catch (err) {
+            setError('Network error');
+        } finally {
+            setLoading(false);
+        }
         setModalType('following')
-        // get following users
-        console.log('Following button pressed');
     };
 
     const closeModalFollows = useCallback(() => {
         setModalType(false);
     }, []);
 
-    const handleOpenPost = (userId, postId) => {
-        console.log('Post opened');
-        const openPostData = { userId, postId, loggedInUserID };
-        console.log('handle open post', loggedInUserID)
+    const handleOpenPost = (username, postID) => {
+        const openPostData = { username, postID, loggedInUserID };
         navigation.navigate('PostScreen', openPostData);
     }
 
+    if (loading) return <Text>Loading...</Text>;
+    if (error) return <Text>Error: {error}</Text>;
+    
     return(
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -198,7 +238,7 @@ export default function ProfileScreen({ navigation, route }) {
                         <View style={styles.profilePicArea}>
                             <Image 
                                 style={styles.profilePic}
-                                source={{ uri:userContent.profilePic} }
+                                source={{ uri:userContent.profilePicPath} }
                             />
                         </View>
 
@@ -206,28 +246,34 @@ export default function ProfileScreen({ navigation, route }) {
                         <View style={styles.profileInfoRightSide}>
                             <View style={styles.userFollowing}>
                                 <View style={styles.posts}>
-                                    <Text  style={styles.headerText}>{userContent.posts.length}</Text>
+                                    <Text  style={styles.headerText}>{posts.length}</Text>
                                     <Text  style={styles.headerText}>Posts</Text>
                                 </View>
                                 <TouchableOpacity style={styles.followers} onPress={handleFollowers}>
-                                    <Text style={styles.headerText}>{userContent.followers.length}</Text>
+                                    <Text style={styles.headerText}>{userFollowersListLength}</Text>
                                     <Text style={styles.headerText}>Followers</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.following} onPress={handleFollowing}>
-                                    <Text  style={styles.headerText}>{userContent.following.length}</Text>
+                                    <Text  style={styles.headerText}>{userFollowingListLength}</Text>
                                     <Text  style={styles.headerText}>Following</Text>
                                 </TouchableOpacity>
 
-                                </View>
+                            </View>
+                                
+                            <View>
                                 {loggedInUserID !== accessedProfileUserID && (
                                     <View style={styles.buttons}>
-                                    
-                                            <FullWidthButton text="Follow"/>
-                                            <FullWidthButton text="Message" />
-                                
+                                        <TouchableOpacity style={styles.button} onPress={onPress}>
+                                            <Text style={styles.buttonText}>Follow</Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity style={styles.button} onPress={onPress}>
+                                            <Text style={styles.buttonText}>Message</Text>
+                                        </TouchableOpacity>
                                     </View>
-                                )}
-                                </View>
+                                    )}
+                            </View>
+                        </View>
 
                     </View>
 
@@ -250,9 +296,24 @@ export default function ProfileScreen({ navigation, route }) {
                                 <Feather name="x" size={24} color="black" />
                             </TouchableOpacity>
                             <Text style={styles.modalFollowTitle}>{modalType}</Text>
-                            {modalType === 'followers' && (<Likes likes={userContent.followers} />)}
-                            {modalType === 'following' && (<Likes likes={userContent.following} />)}
-                            
+
+                                { modalType === 'following' && (
+                                    <Likes
+                                        navigation={navigation}
+                                        route={{ params: { loggedInUserID } }} 
+                                        usersList={followingList} 
+                                        closeModal={closeModalFollows} 
+                                    />
+                                )}
+
+                                { modalType === 'followers' && (
+                                    <Likes
+                                        navigation={navigation}
+                                        route={{ params: { loggedInUserID } }} 
+                                        usersList={followersList} 
+                                        closeModal={closeModalFollows} 
+                                    />
+                                )}
                         </View>
                     </View>
                 </Modal>
@@ -260,17 +321,17 @@ export default function ProfileScreen({ navigation, route }) {
 
                 {/* Content Area */}
                 <View style={styles.contentAreaContainer}>
-                    {Array.from({ length: postsRowsNo }).map((_, indexRow) => (
-                        <View key={indexRow} style={styles.postsRows}>
-                           
+                    {Array.from({ length: Math.ceil(posts.length / 3) }).map((_, indexRow) => (
                         
-                           {userContent.posts.slice(indexRow * 3, indexRow * 3 + 3).map((post, index) => (
+                        <View key={indexRow} style={styles.postsRows}>
+                        
+                           {posts.slice(indexRow * 3, indexRow * 3 + 3).map((post, index) => (
                                 <View key={post.postId} style={styles.post}>
                                     <View style={styles.postPictureArea}>
-                                        <TouchableOpacity onPress={() => handleOpenPost(userContent.userId, post.postId)}>
+                                        <TouchableOpacity onPress={() => handleOpenPost(userContent.username, post.postID)}>
                                             <Image
                                                 style={styles.postImage}
-                                                source={{ uri: post.postImage }}
+                                                source={{ uri: post.postPhotoPath }}
                                             />
                                         </TouchableOpacity>
                                     </View>
@@ -339,17 +400,19 @@ const styles = StyleSheet.create({
     profilePic: {
         width: 100,
         height: 100,
+        marginTop: 7,
         borderRadius: 60,
         backgroundColor: 'lightcoral',
     },
     profileInfoRightSide: {
         flex: 0.65,
         flexDirection: 'rows',
-        // justifyContent: 'space-around',
         alignItems: 'center',
     },
     userFollowing: {
+        marginTop: 20,
         flex: 0.65,
+        marginRight: 10,
         flexDirection: 'row',  
         alignItems: 'center', 
     },
@@ -359,12 +422,29 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     buttons: {
-        flex: 0.5,
-        width: '50%',
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        alignItems: 'center',
+        flex: 0.35, 
+        width: '55%',
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        alignItems: 'flex-end',
+
     },
+    button: {
+        width: '80%', 
+        height: 35,
+        backgroundColor: 'rgb(220, 220, 220)',
+        borderRadius: 5,
+        marginRight: 10,
+        marginTop: 10,
+        justifyContent: 'center',
+        alignSelf: 'center',
+      },
+      buttonText: {
+        color: 'black',
+        padding: 10,
+        textAlign: 'center',
+        fontWeight: 'bold',
+      },
     posts: {
         flex: 0.33,
         justifyContent: 'center',

@@ -1,7 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 
-export default function Likes({ likes }) {
+export default function Likes({ navigation, route, closeModal, usersList }) {
+    const {  loggedInUserID } = route.params;
+    
+    const redirectToProfile = (username) => {
+        closeModal();
+        navigation.navigate('Profile', {loggedInUserID, accessedProfileUserID: username});
+    }
+
     return (
         <View style={styles.mainContainer}>
             <View style={styles.likesContainer}>
@@ -10,13 +17,14 @@ export default function Likes({ likes }) {
                     keyboardShouldPersistTaps="handled"
                 >
                     <View style={styles.likeList}>
-                        {likes.map((like, index) => (
-                            <TouchableOpacity key={index} style={styles.photo_content}>
+                        {usersList.map((user, index) => (
+                            <TouchableOpacity key={index} style={styles.photo_content} onPress={() => redirectToProfile(user.username)}
+                            >
                                 <Image 
                                     style={styles.userProfilePic} 
-                                    source={require('../../assets/profilePic.png')}
+                                    source={{uri: user.profilePicPath}}
                                 />
-                                <Text style={styles.likeUser}>{like.likeUser}</Text>
+                                <Text style={styles.likeUser}>{user.username}</Text>
                             </TouchableOpacity>
                         ))}
                     </View>

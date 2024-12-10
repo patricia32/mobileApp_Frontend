@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
         width: '100%',
         justifyContent: 'space-around',
         alignItems: 'center',
-        borderTopWidth: 0.4,  // Changed from topborderWidth to borderTopWidth
+        borderTopWidth: 0.4, 
         borderColor: '#d3d3d3',
     }
 });
