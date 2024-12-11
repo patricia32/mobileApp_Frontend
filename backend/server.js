@@ -112,6 +112,7 @@ app.get('/getUserPosts_id_and_photoPath', (req, res) => {
 // Endpoint to get user following list length
 app.get('/getUserFollowingListLength', (req, res) => {
     const username = req.query.username; 
+    console.log(username);
     if (!username) 
         return res.status(400).send({ error: 'Username is required' });
 
@@ -319,7 +320,131 @@ app.get('/post/getComments', (req, res) => {
     });
 });
 
+// Endpoint to get user profile picture path
+app.get('/user/getUserProfilePicPath', (req, res) => {
+    const username = req.query.username; 
+    if (!username) 
+        return res.status(400).send({ error: 'Username is required' });
 
+    const query = `
+       SELECT profilePicPath
+       FROM users
+       WHERE username = ?;
+    `;
+
+    db.query(query, [username], (err, result) => {
+        if (err) 
+            return res.status(500).send({ error: 'Error fetching profile picture path' });
+
+        if (result.length === 0) 
+            return res.status(404).send({ error: 'User not found' });
+        
+        res.json(result[0]); 
+    });
+});
+
+// Endpoint to add a new comment to a post
+app.post('/post/addComment', (req, res) => {  
+    const { postID, userUsername, commentText } = req.body;
+    if (!postID || !userUsername || !commentText) 
+        return res.status(400).send({ error: 'Post ID, User Username and Comment Text are required' });
+
+    const query = `
+       INSERT INTO comments (postID, userUsername, commentText)
+       VALUES (?, ?, ?);
+    `;
+
+    db.query(query, [postID, userUsername, commentText], (err, result) => {
+        if (err) {
+            console.error('Error adding comment:', err); 
+            return res.status(500).send({ error: 'Error adding comment' });
+        }
+
+        res.send('Comment added successfully');
+    });
+});
+
+// Endpoint to check if a user liked a post
+app.get('/post/checkLike', (req, res) => {
+    const postID = req.query.postID; 
+    const userUsername = req.query.userUsername;
+    
+    if (!postID || !userUsername) 
+        return res.status(400).send({ error: 'Post ID and User Username are required' });
+
+    const query = `
+       SELECT EXISTS (
+              SELECT 1 
+              FROM likes 
+              WHERE postID = ? AND userUsername = ?
+         ) AS isLiked;
+    `;
+
+    db.query(query, [postID, userUsername], (err, result) => {
+        if (err) 
+            return res.status(500).send({ error: 'Error checking like' });
+
+        const isLiked = result[0].isLiked === 1; 
+        res.json({ isLiked });
+    });
+});
+
+// Endpoint to like a post
+app.post('/post/like', (req, res) => {
+    const { postID, userUsername } = req.body;
+    if (!postID || !userUsername) 
+        return res.status(400).send({ error: 'Post ID and User Username are required' });
+
+    // Check if the user has already liked the post
+    const checkQuery = `
+       SELECT 1 
+       FROM likes 
+       WHERE postID = ? AND userUsername = ?
+    `;
+    db.query(checkQuery, [postID, userUsername], (err, result) => {
+        if (err) 
+            return res.status(500).send({ error: 'Error checking like status' });
+
+        if (result.length > 0) {
+            return res.status(400).send({ error: 'Post already liked by user' });
+        }
+
+        // If not already liked, insert the like
+        const query = `
+           INSERT INTO likes (postID, userUsername)
+           VALUES (?, ?);
+        `;
+
+        db.query(query, [postID, userUsername], (err, result) => {
+            if (err) 
+                return res.status(500).send({ error: 'Error liking post' });
+
+            res.send('Post liked successfully');
+        });
+    });
+});
+
+
+
+// Endpoint to unlike a post
+app.delete('/post/unlike', (req, res) => {
+    const { postID, userUsername } = req.body;
+    if (!postID || !userUsername) 
+        return res.status(400).send({ error: 'Post ID and User Username are required' });
+
+    const query = `
+       DELETE FROM likes
+       WHERE postID = ? AND userUsername = ?;
+    `;
+
+    db.query(query, [postID, userUsername], (err, result) => {
+        if (err) 
+            return res.status(500).send({ error: 'Error unliking post' });
+
+        console.log('Post unliked successfully');
+        res.send('Post unliked successfully');
+    });
+});
 
 
 // Test endpoint

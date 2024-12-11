@@ -1,8 +1,10 @@
 import React from 'react';  
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import { View, StyleSheet, SafeAreaView } from 'react-native';
 import { useState, useEffect } from 'react';
 import Footer from '../components/Footer';
 import Post from '../components/PostFeed';
+import LoadingScreen from './LoadingScreen';
+
 
 export default function PostScreen({ navigation, route}) {
     const { username, postID, loggedInUserID } = route.params;
@@ -35,8 +37,8 @@ export default function PostScreen({ navigation, route}) {
         getPostData();
     }, []);
 
-    if (loading) return <Text>Loading...</Text>;
-    if (error) return <Text>Error: {error}</Text>;
+    if (loading) return <LoadingScreen />;
+    if (error) return <ErrorScreen error={error} onGoBack={() => navigation.goBack()} />;
 
     return(
         <SafeAreaView style={styles.container}>

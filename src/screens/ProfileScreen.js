@@ -3,7 +3,11 @@ import React, {useCallback, useRef, useState, useEffect} from "react";
 import Footer from "../components/Footer";
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
-import Likes from "../components/Likes";
+import UsersList from "../components/UsersList";
+import LoadingScreen from "./LoadingScreen";
+import ErrorScreen from "./ErrorScreen";
+
+
 
 export default function  ProfileScreen({ navigation, route }) {
     const { loggedInUserID, accessedProfileUserID } = route.params;
@@ -18,8 +22,6 @@ export default function  ProfileScreen({ navigation, route }) {
     const [userContent, setUserContent] = useState(null);
     const [userFollowingListLength, setUserFollowingListLength] = useState(null);
     const [userFollowersListLength, setUserFollowersListLength] = useState(null); 
-    const [followingList, setFollowingList] = useState(null);
-    const [followersList, setFollowersList] = useState(null);
 
     const [posts, setPosts] = useState(null);
 
@@ -122,44 +124,11 @@ export default function  ProfileScreen({ navigation, route }) {
 
     // Fetch followers list
     const handleFollowers = async () => {
-        setLoading(true);  
-        try{
-            const response = await fetch(`http://192.168.1.129:5000/getUserFollowersList?username=${currentProfileUsername}`);
-            const data = await response.json();
-            if (response.ok) {
-                const arrayData = Array.isArray(data) ? data : [data];
-                setFollowersList(arrayData);
-            }
-             else 
-                setError(data.error || 'An error occurred');  
-            
-        } catch (err) {
-            setError('Network error');
-        } finally {
-            setLoading(false);
-        }
         setModalType('followers')
     };
 
+    // Fetch following list
     const handleFollowing = async () => {
-    
-        setLoading(true);
-        // Fetch following list
-        try{
-            const response = await fetch(`http://192.168.1.129:5000/getUserFollowingList?username=${currentProfileUsername}`);
-            const data = await response.json();
-            if (response.ok) {
-                const arrayData = Array.isArray(data) ? data : [data];
-                setFollowingList(arrayData);
-            }
-             else 
-                setError(data.error || 'An error occurred');  
-            
-        } catch (err) {
-            setError('Network error');
-        } finally {
-            setLoading(false);
-        }
         setModalType('following')
     };
 
@@ -171,9 +140,12 @@ export default function  ProfileScreen({ navigation, route }) {
         const openPostData = { username, postID, loggedInUserID };
         navigation.navigate('PostScreen', openPostData);
     }
+    
 
-    if (loading) return <Text>Loading...</Text>;
-    if (error) return <Text>Error: {error}</Text>;
+
+    if (loading) return <LoadingScreen/>;
+    if (error) return <ErrorScreen error={error} onGoBack={() => navigation.goBack()} />;
+
     
     return(
         <KeyboardAvoidingView
@@ -249,11 +221,11 @@ export default function  ProfileScreen({ navigation, route }) {
                                     <Text  style={styles.headerText}>{posts.length}</Text>
                                     <Text  style={styles.headerText}>Posts</Text>
                                 </View>
-                                <TouchableOpacity style={styles.followers} onPress={handleFollowers}>
+                                <TouchableOpacity style={styles.followers} onPress={() => setModalType('followers')}>
                                     <Text style={styles.headerText}>{userFollowersListLength}</Text>
                                     <Text style={styles.headerText}>Followers</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.following} onPress={handleFollowing}>
+                                <TouchableOpacity style={styles.following} onPress={() => setModalType('following')}>
                                     <Text  style={styles.headerText}>{userFollowingListLength}</Text>
                                     <Text  style={styles.headerText}>Following</Text>
                                 </TouchableOpacity>
@@ -295,24 +267,27 @@ export default function  ProfileScreen({ navigation, route }) {
                             <TouchableOpacity onPress={closeModalFollows} style={styles.closeButton}>
                                 <Feather name="x" size={24} color="black" />
                             </TouchableOpacity>
+                            
                             <Text style={styles.modalFollowTitle}>{modalType}</Text>
 
                                 { modalType === 'following' && (
-                                    <Likes
+                                    
+                                    <UsersList
                                         navigation={navigation}
                                         route={{ params: { loggedInUserID } }} 
-                                        usersList={followingList} 
                                         closeModal={closeModalFollows} 
+                                        usersListType={'following'}
+                                        userToGetData={currentProfileUsername}
                                     />
                                 )}
 
                                 { modalType === 'followers' && (
-                                    <Likes
+                                    <UsersList
                                         navigation={navigation}
                                         route={{ params: { loggedInUserID } }} 
-                                        usersList={followersList} 
                                         closeModal={closeModalFollows} 
-                                    />
+                                        usersListType={'followers'}
+                                        userToGetData={currentProfileUsername}                                    />
                                 )}
                         </View>
                     </View>

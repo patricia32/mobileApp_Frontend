@@ -3,8 +3,10 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Feather from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Comments from './Comments';
-import Likes from './Likes';
+import UsersList from './UsersList';
 import Icon from 'react-native-vector-icons/Feather';
+import LoadingScreen from '../screens/LoadingScreen';
+import ErrorScreen from '../screens/ErrorScreen';
 
 export default function Post({ navigation, postData, loggedInUserID }) {
 
@@ -13,6 +15,8 @@ export default function Post({ navigation, postData, loggedInUserID }) {
     const [postCommentsNo, setPostCommentsNo] = useState(0);
     const [likesList, setLikesList] = useState([]);
     const [commentsList, setCommentsList] = useState([]);
+
+    const [liked, setLiked] = useState(undefined);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -35,6 +39,7 @@ export default function Post({ navigation, postData, loggedInUserID }) {
             clearTimeout(tapTimeout.current); 
             tapCount.current = 0; 
 
+            likePost();
             setHeartVisible(true);
             setFooterHeartColor('red'); 
 
@@ -56,7 +61,8 @@ export default function Post({ navigation, postData, loggedInUserID }) {
     }, [scaleValue]);
 
     const handleHeartButton = useCallback(() => {
-        setFooterHeartColor(prevColor => (prevColor === 'black' ? 'red' : 'black'));
+
+        toggleLikeButton();
     }, []);
 
     const handleSettingsButton = useCallback(() => {
@@ -66,43 +72,41 @@ export default function Post({ navigation, postData, loggedInUserID }) {
 
     // Fetch likes 
     const handleViewLikes = useCallback( async () => {
-        try{
-            const response = await fetch(`http://192.168.1.129:5000/post/getLikes?postID=${postDataInstance.postID}`);
-            const likes = await response.json();
 
-            if(response.ok)
-                setLikesList(likes);
-            else
-                setError(likes.error || 'An error occurred');
-        } catch(err){
-            setError('Network error');
-        } finally {
-            setModalType(modalType === 'likes' ? null : 'likes');
-        }
+        setModalType(modalType === 'likes' ? null : 'likes');
+
     }, [modalType]);
 
 
     // Fetch comments 
     const handleCommentButton = useCallback( async () => {
-        try{
-            const response = await fetch(`http://192.168.1.129:5000/post/getComments?postID=${postDataInstance.postID}`);
-            const comments = await response.json();
-
-            if(response.ok)
-                setCommentsList(comments);
-            else
-                setError(comments.error || 'An error occurred');
-        } catch(err){
-            setError('Network error');
-        } finally {
-            setModalType(modalType === 'comments' ? null : 'comments');
-        }
+        setModalType(modalType === 'comments' ? null : 'comments');
     }, [modalType]);
 
 
     const closeModal = useCallback(() => {
         setModalType(null);
     }, []);
+
+
+    //Check if the post is liked by the logged in user
+    const checkIfLiked = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(`http://192.168.1.129:5000/post/checkLike?postID=${postDataInstance.postID}&userUsername=${loggedInUserID}`);
+            const liked = await response.json();
+
+            if (response.ok) 
+                setLiked(liked.isLiked);
+            else
+                setError(liked.error || 'An error occurred');
+
+        } catch (err) {
+            setError('Network error');
+        } finally {
+            setLoading(false);
+        }
+    }
 
     // Fetch post likes and comments numbers
     const getPostLikesAndCommentsNo = async () => {
@@ -134,7 +138,76 @@ export default function Post({ navigation, postData, loggedInUserID }) {
         }
     }
 
+    // Endpoints to like a post
+    const likePost = async () => {
+        if (liked) return;
+        setLoading(true);
+        try {
+            const response = await fetch(`http://192.168.1.129:5000/post/like`, {
+                method: 'POST', 
+                headers: {
+                    'Content-Type': 'application/json', 
+                },
+                body: JSON.stringify({
+                    postID: postDataInstance.postID,
+                    userUsername: loggedInUserID,
+                }),
+            });
+
+            const result = await response.json(); 
+
+            if (response.ok) 
+                setLiked(true);
+
+        } catch (err) {
+            // setError('Network error');
+        } finally {
+            console.log('finally');
+            setLoading(false);
+            checkIfLiked();
+            getPostLikesAndCommentsNo();
+        }
+    }
+            
+    const toggleLikeButton = async () => {
+        if (liked || liked === undefined) {
+            // Unlike post
+            setLoading(true);
+            try {
+                const response = await fetch(`http://192.168.1.129:5000/post/unlike`, {
+                    method: 'DELETE', 
+                    headers: {
+                        'Content-Type': 'application/json', 
+                    },
+                    body: JSON.stringify({
+                        postID: postDataInstance.postID,
+                        userUsername: loggedInUserID,
+                    }),
+                });
+    
+                const result = await response.json(); 
+    
+                if (response.ok) 
+                    setLiked(false);
+                else
+                    setError(result.error || 'An error occurred');
+    
+            } catch (err) {
+                // setError('Network error');
+            } finally {
+                console.log('finally unliked');
+                setLoading(false);
+                checkIfLiked();
+                getPostLikesAndCommentsNo();
+            }
+        }
+        else 
+            likePost();
+    };
+
+
     useEffect(() => {
+        checkIfLiked();
         getPostLikesAndCommentsNo();
 
         return () => {
@@ -146,8 +219,8 @@ export default function Post({ navigation, postData, loggedInUserID }) {
         navigation.navigate('Profile', { loggedInUserID, accessedProfileUserID: postDataInstance.userUsername });
     }
 
-    if (loading) return <Text>Loading...</Text>;
-    if (error) return <Text>Error: {error}</Text>;
+    if (loading) return <LoadingScreen/>;
+    if (error) return <ErrorScreen error={error} onGoBack={() => navigation.goBack()} />;
 
     return (
         <View style={styles.postContainer}>
@@ -187,18 +260,19 @@ export default function Post({ navigation, postData, loggedInUserID }) {
 
             <View style={styles.footer}>
                 <TouchableOpacity onPress={handleHeartButton} accessibilityLabel="Like post">
-                    {footerHeartColor === 'red' ? ( 
+                    {console.log(liked)}
+                    {liked  ? ( 
                         <MaterialCommunityIcons 
                             name="cards-heart" 
                             size={30} 
-                            color={footerHeartColor} 
+                            color={'red'} 
                             style={{ marginLeft: 7 }} 
                         />
                     ) : (
                         <MaterialCommunityIcons 
                             name="cards-heart-outline" 
                             size={30} 
-                            color={footerHeartColor} 
+                            color={'black'} 
                             style={{ marginLeft: 7 }} 
                         />
                     )}
@@ -254,7 +328,8 @@ export default function Post({ navigation, postData, loggedInUserID }) {
                             <Comments
                                         navigation={navigation}
                                         route={{ params: { loggedInUserID } }} 
-                                        comments={commentsList}
+                                        postID={postDataInstance.postID}
+                                        //comments={commentsList}
                                         closeModal={closeModal} 
                             />
                         </View>
@@ -276,11 +351,12 @@ export default function Post({ navigation, postData, loggedInUserID }) {
                                 <Feather name="x" size={24} color="black" />
                             </TouchableOpacity>
                             <Text style={styles.modalCommentTitle}>Likes</Text>
-                            <Likes
+                            <UsersList
                                         navigation={navigation}
                                         route={{ params: { loggedInUserID } }} 
-                                        usersList={likesList} 
                                         closeModal={closeModal} 
+                                        usersListType={'likes'}
+                                        postID={postDataInstance.postID}
                             />
                             
                         </View>

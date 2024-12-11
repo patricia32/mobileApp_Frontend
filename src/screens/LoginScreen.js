@@ -36,7 +36,7 @@ export default function LoginScreen({ navigation }) {
 
     const loggedInUserID = 'Patri'; //// fetch from server
 
-    navigation.navigate('Profile', {loggedInUserID}); 
+    navigation.navigate('Feed', {loggedInUserID}); 
 
   };
 

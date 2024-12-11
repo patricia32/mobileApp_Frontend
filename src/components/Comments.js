@@ -1,100 +1,191 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity, KeyboardAvoidingView, ScrollView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import LoadingScreen from '../screens/LoadingScreen';
+import ErrorScreen from '../screens/ErrorScreen';
 
-export default function Comments({ navigation, route, closeModal, comments, onAddComment }) {
+export default function Comments({ navigation, route, closeModal, postID }) {
     const [newComment, setNewComment] = useState('');
-    const {  loggedInUserID } = route.params;
+    const [comments, setCommentsList] = useState([]);
+    const [profilePicPath, setProfilePicPath] = useState('');
+
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [keyboardIsVisible, setKeyboardIsVisible] = useState(false);
+
+    const { loggedInUserID } = route.params;
 
     const scrollViewRef = useRef(null);
 
+    // Fetch user profile picture path
+    const getUserProfilePicPath = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(`http://192.168.1.129:5000/user/getUserProfilePicPath?username=${loggedInUserID}`);
+            const profilePicPath = await response.json();
 
-    const handleCommentSubmit = () => {
-        if (newComment.trim()) {
-            onAddComment(newComment);
+            if (response.ok) {
+                setProfilePicPath(profilePicPath.profilePicPath);
+            } else {
+                setError(profilePicPath.error || 'An error occurred');
+            }
+        } catch (err) {
+            setError('Network error');
+        } finally {
+            setLoading(false);
+        }
+    }
+     // Fetch comments 
+     const getPostComments = useCallback( async () => {
+        setLoading(true);
+        try{
+            const response = await fetch(`http://192.168.1.129:5000/post/getComments?postID=${postID}`);
+            const comments = await response.json();
+
+            if(response.ok)
+                setCommentsList(comments);
+            else
+                setError(comments.error || 'An error occurred');
+        } catch(err){
+            setError('Network error');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+
+    // Submit comment
+    const handleCommentSubmit = async () => {
+        setLoading(true);
+        setIsSubmitting(true);
+
+        const commentText = newComment;
+        const userUsername = loggedInUserID;
+    
+        if (!commentText || !postID || !userUsername) return;
+    
+        try {
+            const response = await fetch('http://192.168.1.129:5000/post/addComment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ postID, userUsername, commentText }), 
+            });
+    
+            if (response.ok) 
+                console.error('Error:', await response.json());
+            else 
+                console.error('Error:', await response.json());
+            
+        } catch (err) {
+            // console.error('Network error:', err);
+        } finally {
             setNewComment(''); 
+            setIsSubmitting(false); 
+            setLoading(false);
+            getPostComments  ();
+            setKeyboardIsVisible(false);
+        }
+
+    };
+    
+    const redirectToProfile = (username) => {
+        closeModal();
+        navigation.navigate('Profile', { loggedInUserID, accessedProfileUserID: username });
+    }
+
+
+    useEffect(() => {
+        getPostComments();
+        getUserProfilePicPath();
+    }, []);
+
+    const dismissKeyboard = () => {
+        if(keyboardIsVisible){
+            setKeyboardIsVisible(false);
+            Keyboard.dismiss();
         }
     };
 
-    const redirectToProfile = (username) => {
-        closeModal();
-        navigation.navigate('Profile', {loggedInUserID, accessedProfileUserID: username});
-    }
-
+    if(loading) return <LoadingScreen />;
+    if(error) return <ErrorScreen error={error} onGoBack={() => navigation.goBack()} />;
     return (
         <View style={styles.mainContainer}>
-                    <View style={styles.commentsContainer}>
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.keyboardAvoidingView}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={{ flex: 1, 
+                }}
             >
-                <ScrollView
-                        ref={scrollViewRef}
-                        contentContainerStyle={styles.container}
-                        keyboardShouldPersistTaps="handled"
-                    >
-                    <View style={styles.commentList}>
-                        {comments.map((comment, index) => (
-                            <View style={styles.photo_content}>
-                                <TouchableOpacity onPress={() => redirectToProfile(comment.userUsername)} >
-                                    <Image style={styles.userProfilePic} source={{uri:comment.profilePicPath}} />
-                                </TouchableOpacity>
-
-                                <View key={index} style={styles.comment}>
-                                    <View style={styles.name_date}>
-                                        <TouchableOpacity onPress={() => redirectToProfile(comment.userUsername)}>
-                                            <Text style={styles.commentUser}>{comment.userUsername}</Text>
+                <View style={styles.commentsContainer}>
+                        <ScrollView
+                            contentContainerStyle={styles.container}
+                            keyboardShouldPersistTaps="handled"
+                            >
+                            <TouchableWithoutFeedback onPress={dismissKeyboard}>
+                            <View style={styles.commentList}>
+                                {comments.map((comment, index) => (
+                                    <View style={styles.photo_content} key={index}>
+                                        <TouchableOpacity onPress={() => redirectToProfile(comment.userUsername)} >
+                                            <Image style={styles.userProfilePic} source={{ uri: comment.profilePicPath }} />
                                         </TouchableOpacity>
-            
-                                        <Text style={styles.commentDate}>
-                                            {new Date(comment.date).toLocaleString('en-US', {
-                                                day: 'numeric',
-                                                month: 'long',
-                                                year: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })}
-                                        </Text>
 
+                                        <View style={styles.comment}>
+                                            <View style={styles.name_date}>
+                                                <TouchableOpacity onPress={() => redirectToProfile(comment.userUsername)}>
+                                                    <Text style={styles.commentUser}>{comment.userUsername}</Text>
+                                                </TouchableOpacity>
+                    
+                                                <Text style={styles.commentDate}>
+                                                    {new Date(comment.date).toLocaleString('en-US', {
+                                                        day: 'numeric',
+                                                        month: 'long',
+                                                        year: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                    })}
+                                                </Text>
+                                            </View>
+                                            <Text style={styles.commentText}>{comment.commentText}</Text>
+                                        </View>
                                     </View>
-                                    <Text style={styles.commentText}>{comment.commentText}</Text>
-                                </View>
+                                ))}
                             </View>
-                        ))}
+                        </TouchableWithoutFeedback>
+                        </ScrollView>
+                    
+                   {/* Comment input section */}
+                    <View style={[styles.newCommentContainer, { position: keyboardIsVisible ? 'absolute' : 'relative', top: keyboardIsVisible ? 0 : 'auto' }]}>
+                        <Image style={styles.userProfilePic} source={{ uri: profilePicPath }} />
+                        <TextInput
+                            style={styles.commentField}
+                            placeholder="Add a comment..."
+                            value={newComment}
+                            onChangeText={text => {
+                                setNewComment(text);
+                                setKeyboardIsVisible(true);
+                            }}
+                        />
+                        <TouchableOpacity onPress={handleCommentSubmit} disabled={isSubmitting}>
+                            <Text style={[styles.submitButton, isSubmitting && { color: '#aaa' }]}>
+                                {isSubmitting ? 'Posting...' : 'Post'}
+                            </Text>
+                        </TouchableOpacity>
                     </View>
-
-                </ScrollView>
+                </View>
             </KeyboardAvoidingView>
-
-            <View style={styles.newCommentContainer}>
-                <Image style={styles.userProfilePic} source={require('../../assets/profilePic.png')} />
-                <TextInput
-                    style={styles.commentField}
-                    placeholder="Add a comment..."
-                    value={newComment}
-                    onChangeText={text => setNewComment(text)}
-                    onSubmitEditing={handleCommentSubmit} 
-                />
-                <TouchableOpacity onPress={handleCommentSubmit}>
-                    <Text style={styles.submitButton}>Post</Text>
-                </TouchableOpacity>
-            </View>
         </View>
-    </View>
     );
 }
 
 const styles = StyleSheet.create({
-    keyboardAvoidingView: {
-        flex: 1,
-      },
-
     mainContainer: {
         flex: 1,
         backgroundColor: '#fff',
     },
     commentsContainer: {
+        flex: 1,
         marginTop: 10,
-        flex: 1, 
     },
     commentList: {
         flexGrow: 1,
@@ -114,6 +205,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     commentText: {
+        fontSize: 14,
+        color: '#333',
     },
     commentDate: {
         marginLeft: 10,
@@ -124,6 +217,7 @@ const styles = StyleSheet.create({
 
     // New comment styles
     newCommentContainer: {
+        backgroundColor: '#f9f9f9',
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 20,
