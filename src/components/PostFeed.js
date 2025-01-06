@@ -9,12 +9,10 @@ import LoadingScreen from '../screens/LoadingScreen';
 import ErrorScreen from '../screens/ErrorScreen';
 
 export default function Post({ navigation, postData, loggedInUserID }) {
-
+    
     const [postDataInstance, setPostDataInstance] = useState(postData[0]);
     const [postLikesNo, setPostLikesNo] = useState(0);
     const [postCommentsNo, setPostCommentsNo] = useState(0);
-    const [likesList, setLikesList] = useState([]);
-    const [commentsList, setCommentsList] = useState([]);
 
     const [liked, setLiked] = useState(undefined);
 
@@ -85,6 +83,7 @@ export default function Post({ navigation, postData, loggedInUserID }) {
 
 
     const closeModal = useCallback(() => {
+        getPostLikesAndCommentsNo();
         setModalType(null);
     }, []);
 
@@ -162,7 +161,6 @@ export default function Post({ navigation, postData, loggedInUserID }) {
         } catch (err) {
             // setError('Network error');
         } finally {
-            console.log('finally');
             setLoading(false);
             checkIfLiked();
             getPostLikesAndCommentsNo();
@@ -195,7 +193,6 @@ export default function Post({ navigation, postData, loggedInUserID }) {
             } catch (err) {
                 // setError('Network error');
             } finally {
-                console.log('finally unliked');
                 setLoading(false);
                 checkIfLiked();
                 getPostLikesAndCommentsNo();
@@ -260,7 +257,6 @@ export default function Post({ navigation, postData, loggedInUserID }) {
 
             <View style={styles.footer}>
                 <TouchableOpacity onPress={handleHeartButton} accessibilityLabel="Like post">
-                    {console.log(liked)}
                     {liked  ? ( 
                         <MaterialCommunityIcons 
                             name="cards-heart" 
@@ -301,12 +297,12 @@ export default function Post({ navigation, postData, loggedInUserID }) {
             <View style={styles.postInteractions}>
                 {postLikesNo !== 0 && (
                     <TouchableOpacity onPress={handleViewLikes} accessibilityLabel="View likes">
-                        <Text style={{ marginBottom: 4, fontWeight: 'bold' }}>{postLikesNo} likes</Text>
+                        <Text style={{ marginBottom: 4, fontWeight: 'bold' }}>{postLikesNo} {postLikesNo === 1 ? 'like' : 'likes'}</Text>
                     </TouchableOpacity>
                 )}
                 {postCommentsNo !== 0 && (
                     <TouchableOpacity onPress={handleCommentButton} accessibilityLabel="View comments">
-                        <Text style={{ marginBottom: 4, fontWeight: 'bold' }}>{postCommentsNo} comments</Text>
+                        <Text style={{ marginBottom: 4, fontWeight: 'bold' }}>{postCommentsNo} {postCommentsNo === 1 ? 'comment' : 'comments'}</Text>
                     </TouchableOpacity>
                 )}
             </View>

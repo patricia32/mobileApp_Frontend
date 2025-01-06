@@ -2,10 +2,10 @@ import React from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
 
 
-export default function StoryBullet({ storyData, navigation }) {
+export default function StoryBullet({ storyData, navigation, loggedInUserID }) {
 
     const openStory = () => {
-        navigation.navigate('StoryScreen', { storyData, navigation }); 
+        navigation.navigate('StoryScreen', { storyData, navigation, loggedInUserID }); 
     };
 
 
@@ -14,10 +14,10 @@ export default function StoryBullet({ storyData, navigation }) {
             <View style={styles.storyContainer}>
                 <View style={styles.storyCircle}>
                     <Image
-                        source={{ uri: storyData.userProfilePicture }}
+                        source={{ uri: storyData.profilePicPath }}
                         style={styles.storyUserPhoto}
                         />
-                    <Text style={styles.userName}>{storyData.userName}</Text>
+                    <Text style={styles.userName}>{storyData.followedUsername}</Text>
                 </View>
             </View>
         </TouchableOpacity>

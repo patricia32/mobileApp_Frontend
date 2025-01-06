@@ -1,74 +1,71 @@
 import {View, ScrollView} from 'react-native';
+import { useEffect, useState } from 'react';
+
 import StoryBullet from './StoryBullet';
 import React from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import LoadingScreen from '../screens/LoadingScreen';
+import ErrorScreen from '../screens/ErrorScreen';
 
 
-    const stories = [
-        { 
-            userID: 1,
-            userProfilePicture: 'https://picsum.photos/201',
-            // userProfilePicture: require('../../assets/patriProfilePic.png'),
-            // userProfilePicture: loggedUserDetails ? loggedUserDetails.userProfilePicture : 'https://picsum.photos/201',
-            userName: 'Your Story',
-            storyImages: [
-                'https://picsum.photos/201',
-                'https://picsum.photos/202',
-                'https://picsum.photos/203'
-            ],
-        },
+    let storiesOut = [];
 
-        {
-            userID: 2,
-            userProfilePicture:  require('../../assets/corinaProfilePic.png'),
-            userProfilePicture: 'https://picsum.photos/202',
-            userName: 'Corina Dragotoniu',
-            storyImages: [
-                require('../../assets/corinaPostImage.png'),
-            ],
-        },
+    export const openStoryWithIndex = (viewedStory, navigation,loggedInUserID, goForward ) => { // goForward = true -> next story, goForward = false -> previous story
         
-        {
-            userID: 3,
-            userProfilePicture: 'https://picsum.photos/203',
-            userName: 'Alice',
-            storyImages: [
-                'https://picsum.photos/206',
-                'https://picsum.photos/207'
-            ],
-        },
-        
-        {
-            userID: 4,
-            userProfilePicture: 'https://picsum.photos/204',
-            userName: 'Bob',
-            storyImages: [
-                'https://picsum.photos/208',
-                'https://picsum.photos/209'
-            ],
-        },
-        {
-            userID: 5,
-            userProfilePicture: 'https://picsum.photos/205',
-            userName: 'Charlie',
-            storyImages: [
-                'https://picsum.photos/210',
-                'https://picsum.photos/211'
-            ],
-        }
-    ];
+        const viewedStoryIndex = storiesOut.findIndex ( item => 
+            item.followedUsername === viewedStory.followedUsername &&
+            item.profilePicPath === viewedStory.profilePicPath &&
+            item.storyID === viewedStory.storyID
+        );
 
-    export const openStoryWithIndex = (userID, navigation) => {
-        if (userID > stories.length || userID === 0) {
+                // display previous story                        display next story
+        if((!goForward && viewedStoryIndex === 0) || (goForward && viewedStoryIndex === storiesOut.length - 1)){
             navigation.goBack();
             return;
         }
-        const storyData = stories.find(story => story.userID === userID);
-        console.log(storyData);
-        navigation.navigate('StoryScreen', { storyData, navigation });
-    };
-    export default function StoriesList({ navigation }) {
 
+        let targetStoryIndex;
+        if(goForward)
+            targetStoryIndex = viewedStoryIndex + 1;
+        else
+            targetStoryIndex = viewedStoryIndex - 1;
+
+        const storyData = storiesOut[targetStoryIndex];
+        navigation.navigate('StoryScreen', { storyData, navigation, loggedInUserID });
+    };
+
+    export default function StoriesList({ navigation, loggedInUserID }) {
+
+        const [stories, setStories] = useState([]);
+        const [loading, setLoading] = useState(false);
+        const [error, setError] = useState(false)
+       
+        const getStoryBulletsData = async () =>{
+            setLoading(true);
+            try{
+                const response = await fetch(`http://192.168.1.129:5000/story/getStoriesData_bulletsList?username=${loggedInUserID}`);
+                const data = await response.json();
+                if(response.ok){
+                    setStories(data)
+                    storiesOut = data;
+                }
+                else
+                    setError(data.error || 'An error occurred');
+    
+            } catch(err){
+                setError('Network error');
+            } finally {
+                setLoading(false);
+            }
+        }
+    
+        useEffect(() => {
+               getStoryBulletsData();
+            }, []); 
+    
+            
+    if (loading) return <LoadingScreen/>;
+    if (error) return <ErrorScreen error={error} onGoBack={() => navigation.goBack()} />;
 
     return (
 
@@ -78,7 +75,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
                 showsHorizontalScrollIndicator={false}
             >
                 {stories.map((storyData, index) => {
-                    return <StoryBullet key={index} storyData={storyData} navigation={navigation} />
+                    return <StoryBullet key={index} storyData={storyData} navigation={navigation} loggedInUserID={loggedInUserID}/>
                 })}
                 </ScrollView>
         </View>

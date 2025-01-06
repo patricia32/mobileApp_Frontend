@@ -6,12 +6,15 @@ import MaterialComunityIcons from 'react-native-vector-icons/MaterialCommunityIc
 import {openStoryWithIndex} from '../components/StoriesList';
 import ForwardStoryImage from '../components/ForwardStoryImage';
 
-export default function StoryScreen({ route, navigation }) {
+import LoadingScreen from './LoadingScreen';
+import ErrorScreen from './ErrorScreen';
+
+export default function StoryScreen({ route, navigation, loggedInUserID }) {
 
 
     ///     LIKED STORY REQUEST         
 
-
+    
     const userFriends = [
         {
             id: 1,
@@ -24,7 +27,7 @@ export default function StoryScreen({ route, navigation }) {
             userProfilePicture: 'https://randomuser.me/api/portraits',
         },
     ];
-
+    
     const { storyData } = route.params;
     const [message, setMessage] = useState('');
     const [heartColor, setHeartColor] = useState('black');
@@ -32,6 +35,13 @@ export default function StoryScreen({ route, navigation }) {
     const [storyDisplayingTime, setStoryDisplayingTime] = useState(3000); 
     const timerRef = useRef(null); 
     const [modalType, setModalType] = useState(null); 
+
+
+    const [storyImagesFetched, setStoryImagesFetched] = useState(false);
+    const [storyImages, setStoryImages] = useState([]);
+
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false)
 
 
     const closeStory = () => {
@@ -67,49 +77,93 @@ export default function StoryScreen({ route, navigation }) {
     }, []);
 
 
-    useEffect(() => {
-        clearTimeout(timerRef.current);
-
-        // Set the timer to display the next story image
-        timerRef.current = setTimeout(() => {
-            handleNextStoryImage();
-        }, storyDisplayingTime);
-
-        return () => clearTimeout(timerRef.current);
-    }, [currentIndex, storyDisplayingTime]);
-
+   
+   
 
     // Display the previous story image
     const handlePreviousStoryImage = () => {
         Keyboard.dismiss();
         setHeartColor('black');
+
         if (currentIndex > 0) 
-            setCurrentIndex(prevIndex => prevIndex - 1);
+            setCurrentIndex(currentIndex - 1);
+
         else{
-                openStoryWithIndex(storyData.userID-1, navigation)
-                setCurrentIndex(0);
-                setStoryDisplayingTime(3000);
-                setHeartColor('black');
+            setLoading(true);
+            openStoryWithIndex(storyData, navigation, false)
+            setStoryImagesFetched(false);
+            setCurrentIndex(0);
+            setStoryDisplayingTime(3000);
+            setHeartColor('black'); 
         }
     };
+
 
     // Display the next story image
     const handleNextStoryImage = () => {
         Keyboard.dismiss(); 
         setHeartColor('black');
-        if (currentIndex < storyData.storyImages.length - 1) 
-            setCurrentIndex(prevIndex => prevIndex + 1);
+
+        if (currentIndex < storyImages.length - 1) {
+            setCurrentIndex(prevItem => prevItem + 1);
+        }
         else{
-            
-            openStoryWithIndex(storyData.userID+1, navigation)
+            setLoading(true); 
+            openStoryWithIndex(storyData, navigation, loggedInUserID, true)
+            setStoryImagesFetched(false);
             setCurrentIndex(0);
             setStoryDisplayingTime(3000);
             setHeartColor('black');
         }
     };
 
-    return (
+
+    const getStoryImages = async () => {
+        setLoading(true);
+        try{
+            const response = await fetch(`http://192.168.1.129:5000/story/getStoryImages?storyID=${storyData.storyID}`);
+            const data = await response.json();
+            
+            if(response.ok)
+                setStoryImages(data)
+            else
+                setError(data.error || 'An error occurred');
+        } catch(err){
+            setError('Network error');
+        } finally {
+            setStoryImagesFetched(true);
+            setLoading(false);
+        }
+    }
+
+
+    if(!storyImagesFetched){
+        getStoryImages();
+        setStoryImagesFetched(true);
         
+    }
+    useEffect(() => {
+               
+        if(storyImages.length !== 0){
+
+            clearTimeout(timerRef.current);
+    
+            // Set the timer to display the next story image
+            timerRef.current = setTimeout(() => {
+                handleNextStoryImage();
+            }, storyDisplayingTime);
+    
+            return () => clearTimeout(timerRef.current);
+        }
+        
+
+    }, [ currentIndex, storyDisplayingTime, storyImages]);
+
+
+    if (loading) return <LoadingScreen/>;
+    if (error) return <ErrorScreen error={error} onGoBack={() => navigation.goBack()} />;
+    
+    return (
         <SafeAreaView style={styles.container}>
             <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                 <StatusBar 
@@ -117,15 +171,16 @@ export default function StoryScreen({ route, navigation }) {
                     backgroundColor="black" 
                 />
                 
-                {/*Stories horizontal top lines */}
+                {/* Stories horizontal top lines */}
+
                 <View style={styles.horizontalLines}>
-                    {storyData.storyImages.map((_, index) => (
+                    {storyImages.map((_, index) => (
                         <View
                             key={index}
                             style={[
                                 styles.horizontalLine,
-                                { flex: 1 / storyData.storyImages.length }, 
-                                index === storyData.storyImages.length - 1 && { marginRight: 17 }, 
+                                { flex: 1 / storyImages.length }, 
+                                index === storyImages.length - 1 && { marginRight: 17 }, 
                                 index <= currentIndex && { backgroundColor: 'white' }, 
                             ]}
                         />
@@ -136,10 +191,10 @@ export default function StoryScreen({ route, navigation }) {
                 <View style={styles.storyHeader}>
                     <TouchableOpacity style={styles.storyUserData}>
                         <Image
-                            source={{ uri: storyData.userProfilePicture }}
+                            source={{ uri: storyData.profilePicPath }}
                             style={styles.storyUserImage}
                         />
-                        <Text style={styles.storyUserName}>{storyData.userName}</Text>
+                        <Text style={styles.storyUserName}>{storyData.followedUsername}</Text>
                     </TouchableOpacity>
                     
                     <TouchableOpacity onPress={closeStory} style={styles.closeButton}>
@@ -151,7 +206,7 @@ export default function StoryScreen({ route, navigation }) {
                 <View style={styles.storyContent}>
                     <View style={styles.imageContainer}>
                         <Image
-                            source={{ uri: storyData.storyImages[currentIndex] }}
+                            source={{ uri: storyImages[currentIndex].imagePath }}
                             style={styles.image}
                         />
                         <TouchableOpacity style={styles.leftSide} onPress={handlePreviousStoryImage} />
@@ -201,7 +256,7 @@ export default function StoryScreen({ route, navigation }) {
 
                     <TouchableOpacity style={styles.iconArea} onPress={handleForwardStoryImage}>
                         <Feather name="send" size={27} style={styles.icon} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> 
 
                 </View>
             </KeyboardAvoidingView>

@@ -22,11 +22,15 @@ export default function  ProfileScreen({ navigation, route }) {
     const [userContent, setUserContent] = useState(null);
     const [userFollowingListLength, setUserFollowingListLength] = useState(null);
     const [userFollowersListLength, setUserFollowersListLength] = useState(null); 
+    const [following, setFollowing] = useState(false); 
+
 
     const [posts, setPosts] = useState(null);
 
 
     const [loading, setLoading] = useState(true);
+    const [loadingFollow, setLoadingFollow] = useState(true);
+
     const [error, setError] = useState(null);
 
 
@@ -94,9 +98,31 @@ export default function  ProfileScreen({ navigation, route }) {
             setLoading(false);  
         }
     };
+
+    const checkFollowing = async () =>{
+        if(loggedInUserID === accessedProfileUserID) return;
+        setLoadingFollow(true);
+        try {
+            const response = await fetch(`http://192.168.1.129:5000/user/checkFollowing?usernameFollowing=${loggedInUserID}&usernameFollowed=${accessedProfileUserID}`);
+            const data = await response.json();
+
+            if (response.ok) 
+                setFollowing(data);
+            
+            else
+                setError(data.error || 'An error occurred');
+
+        } catch (err) {
+            setError('Network error');
+        } finally {
+            console.log("is following", following)
+            setLoadingFollow(false);
+        }
+    }
     
     useEffect(() => {
         fetchUserProfile();
+        checkFollowing();
     }, [currentProfileUsername]);  
     
 
@@ -132,6 +158,54 @@ export default function  ProfileScreen({ navigation, route }) {
         setModalType('following')
     };
 
+    const handleToggleFollowButton = async () => {
+        setLoading(true);
+    
+        try {
+            let response;
+            console.log("last check", following);
+            
+            //API call based on the current follow status
+            if (following) { // unfollow
+                response = await fetch(`http://192.168.1.129:5000/user/unFollow`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        usernameFollowing: loggedInUserID,
+                        usernameFollowed: accessedProfileUserID,
+                }),
+            });
+
+           } else { // follow
+                response = await fetch(`http://192.168.1.129:5000/user/follow`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        usernameFollowing: loggedInUserID,
+                        usernameFollowed: accessedProfileUserID,
+                    }),
+                });
+           }
+    
+            const data = await response.json();
+    
+            // If the API call was successful, toggle the 'following' state
+            if (response.ok) 
+                setFollowing(prevFollowing => !prevFollowing);
+            else 
+                setError(data.error || 'An error occurred');
+    
+        } catch (err) {
+            setError('Network error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const closeModalFollows = useCallback(() => {
         setModalType(false);
     }, []);
@@ -141,9 +215,7 @@ export default function  ProfileScreen({ navigation, route }) {
         navigation.navigate('PostScreen', openPostData);
     }
     
-
-
-    if (loading) return <LoadingScreen/>;
+    if (loading || loadingFollow) return <LoadingScreen/>;
     if (error) return <ErrorScreen error={error} onGoBack={() => navigation.goBack()} />;
 
     
@@ -235,8 +307,16 @@ export default function  ProfileScreen({ navigation, route }) {
                             <View>
                                 {loggedInUserID !== accessedProfileUserID && (
                                     <View style={styles.buttons}>
-                                        <TouchableOpacity style={styles.button} onPress={onPress}>
-                                            <Text style={styles.buttonText}>Follow</Text>
+                                        <TouchableOpacity 
+                                            style={[
+                                                styles.button, 
+                                                { backgroundColor: following ? 'rgb(220, 220, 220)': 'rgb(0, 149, 246)' }
+                                            ]}                                             
+                                           onPress={() => handleToggleFollowButton()}
+                                            >
+                                            <Text style={styles.buttonText}>
+                                                {following  ? 'Unfollow' : 'Follow'}
+                                            </Text>
                                         </TouchableOpacity>
 
                                         <TouchableOpacity style={styles.button} onPress={onPress}>

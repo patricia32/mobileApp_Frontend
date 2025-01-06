@@ -26,7 +26,7 @@ export default function FeedScreen({ navigation, route }) {
                     keyboardShouldPersistTaps="handled"
                 >
                     <View style={styles.stories}>
-                        <StoriesList navigation={navigation}/>
+                        <StoriesList navigation={navigation} loggedInUserID={loggedInUserID}/>
                     </View>
 
                     <View style={styles.posts}>

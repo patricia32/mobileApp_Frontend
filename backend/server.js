@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const { use } = require('react');
 
 const app = express();
 
@@ -112,7 +113,6 @@ app.get('/getUserPosts_id_and_photoPath', (req, res) => {
 // Endpoint to get user following list length
 app.get('/getUserFollowingListLength', (req, res) => {
     const username = req.query.username; 
-    console.log(username);
     if (!username) 
         return res.status(400).send({ error: 'Username is required' });
 
@@ -441,11 +441,183 @@ app.delete('/post/unlike', (req, res) => {
         if (err) 
             return res.status(500).send({ error: 'Error unliking post' });
 
-        console.log('Post unliked successfully');
         res.send('Post unliked successfully');
     });
 });
 
+
+// Endpoint to get all feed posts 
+app.get('/post/getFeedPosts', (req, res) => {
+    const username = req.query.username; 
+    if (!username) 
+        return res.status(400).send({ error: 'Username is required' });
+
+    const query = `
+       SELECT *, users.profilePicPath
+        FROM posts
+        JOIN users ON users.username = posts.userUsername
+        WHERE userUsername != ?;
+    `;
+
+    db.query(query, [username], (err, result) => {
+        if (err) 
+            return res.status(500).send({ error: 'Error fetching posts from feed' });
+        
+        res.json(result); 
+    });
+});
+
+// Endpoint to check if an user is followed by another one
+app.get('/user/checkFollowing', (req, res) => {
+    const usernameFollowing = req.query.usernameFollowing; 
+    const usernameFollowed = req.query.usernameFollowed; 
+    
+    // Check if both parameters are provided
+    if (!usernameFollowing || !usernameFollowed) 
+        return res.status(400).send({ error: 'usernameFollowing and usernameFollowed are required' });
+    
+
+    const query = `
+        SELECT EXISTS(
+            SELECT 1
+            FROM followers
+            WHERE userUsername = ? AND followedUsername = ?
+        ) AS isFollowing;
+    `;
+
+    // Execute the query to check if the user is following another user
+    db.query(query, [usernameFollowing, usernameFollowed], (err, result) => {
+        if (err) {
+            return res.status(500).send({ error: 'Error checking follow status' });
+        }
+
+        // Convert the result to a boolean (1 -> true, 0 -> false)
+        const isFollowing = result[0].isFollowing === 1;
+        
+        // Send the boolean value as the response
+        res.json(isFollowing);
+    });
+});
+
+
+app.put('/user/follow', (req, res) => {
+    const {usernameFollowing, usernameFollowed} = req.body;
+
+    if (!usernameFollowing || !usernameFollowed) 
+        return res.status(400).send({ error: 'usernameFollowing and usernameFollowed are required' });
+
+    // Check if the user is already following the followed user
+    const checkQuery = `
+        SELECT 1 
+        FROM followers
+        WHERE userUsername = ? AND followedUsername = ?
+    `;
+    
+    db.query(checkQuery, [usernameFollowing, usernameFollowed], (err, result) => {
+        if (err) return res.status(500).send({ error: 'Error checking follow status' });
+
+        if (result.length > 0) {
+            return res.status(400).send({ error: 'Already following this user' });
+        }
+
+        const insertQuery = `
+            INSERT INTO followers (userUsername, followedUsername)
+            VALUES (?, ?)
+        `;
+
+        db.query(insertQuery, [usernameFollowing, usernameFollowed], (err, result) => {
+            if (err) return res.status(500).send({ error: 'Error following user' });
+            
+            res.json({ message: 'Successfully followed user', affectedRows: result.affectedRows });
+        });
+    });
+});
+
+
+app.delete('/user/unFollow', (req, res) => {
+    
+    const {usernameFollowing, usernameFollowed} = req.body;
+
+    if (!usernameFollowing || !usernameFollowed) 
+        return res.status(400).send({ error: 'usernameFollowing and usernameFollowed are required' });
+
+    // Check if the follow relationship exists before trying to delete
+    const checkQuery = `
+        SELECT 1 
+        FROM followers
+        WHERE userUsername = ? AND followedUsername = ?
+    `;
+    
+    db.query(checkQuery, [usernameFollowing, usernameFollowed], (err, result) => {
+        if (err) return res.status(500).send({ error: 'Error checking follow status' });
+
+        if (result.length === 0) {
+            return res.status(400).send({ error: 'You are not following this user' });
+        }
+
+        const deleteQuery = `
+            DELETE
+            FROM followers
+            WHERE userUsername = ? AND followedUsername = ?
+        `;
+
+        db.query(deleteQuery, [usernameFollowing, usernameFollowed], (err, result) => {
+            if (err) return res.status(500).send({ error: 'Error unfollowing user' });
+            
+            res.json({ message: 'Successfully unfollowed user', affectedRows: result.affectedRows });
+        });
+    });
+});
+
+
+
+app.get('/story/getStoriesData_bulletsList', (req, res) => {
+    const username = req.query.username;
+
+    console.log("stories for ", username)
+
+    if(!username)
+        return res.status(400).send({ error: 'Username is required' });
+
+    const query = `
+        SELECT followers.followedUsername, stories.storyID, users.profilePicPath
+        FROM followers
+        JOIN stories ON stories.userUsername = followers.followedUsername
+        JOIN users ON users.username = followers.followedUsername
+        WHERE followers.userUsername = ?;
+    `;
+
+    db.query(query, [username], (err, result) => {
+        if (err) 
+            return res.status(500).send({ error: 'Error fetching data for story bullets list.' });
+        res.json(result); 
+    });
+})
+
+app.get('/story/getStoryImages', (req, res) => {
+    const storyID = req.query.storyID;
+
+    console.log("story images for storyID = ", storyID)
+
+    if(!storyID)
+        return res.status(400).send({ error: 'storyID is required' });
+
+    const query = `
+       SELECT imagePath
+       FROM storyImages
+       WHERE storyID = ?;
+    `;
+
+    db.query(query, [storyID], (err, result) => {
+        if (err) 
+            return res.status(500).send({ error: 'Error fetching story data.' });
+        
+        console.log(result);
+        res.json(result); 
+
+
+    });
+})
 
 // Test endpoint
 app.get('/', (req, res) => {
