@@ -19,11 +19,21 @@ This app aims to provide an interactive experience similar to Instagram's, featu
 - **SQL Database**
 
 ---
+## Feed Screen
+<img src="https://github.com/user-attachments/assets/09b8dd75-ae67-4061-8396-1e575ee0c2ac" width="400" />
 
-Screenshots from app:
+## Personal Profile Screen
+<img src="https://github.com/user-attachments/assets/9f83dc13-d9c5-4c16-902b-9a868ec53aea" width="400" />
 
-- **Feed screen**:
- ![image](https://github.com/user-attachments/assets/09b8dd75-ae67-4061-8396-1e575ee0c2ac)
+## Post
+<img src="https://github.com/user-attachments/assets/975f093a-7fef-48af-90e1-52698bf739a7" width="400" />
+
+## Story
+<img src="https://github.com/user-attachments/assets/ec02c290-2286-4b4f-b4c3-6b9044a8967f" width="400" />
+
+
+
+
 
 
 
