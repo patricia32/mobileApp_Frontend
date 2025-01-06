@@ -20,4 +20,13 @@ This app aims to provide an interactive experience similar to Instagram's, featu
 
 ---
 
+Screenshots from app:
+
+- **Feed screen**:
+ ![image](https://github.com/user-attachments/assets/09b8dd75-ae67-4061-8396-1e575ee0c2ac)
+
+
+
+
+
 Thank you for checking out this project! 🎉
