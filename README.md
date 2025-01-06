@@ -19,31 +19,25 @@ This app aims to provide an interactive experience similar to Instagram's, featu
 - **SQL Database**
 
 ---
-<div style="display: flex; justify-content: space-between;">
-    <div>
-        <h3>Feed Screen</h3>
-        <img src="https://github.com/user-attachments/assets/09b8dd75-ae67-4061-8396-1e575ee0c2ac" width="200" height="400"/>
-    </div>
-    <div>
-        <h3>Personal Profile Screen</h3>
-        <img src="https://github.com/user-attachments/assets/9f83dc13-d9c5-4c16-902b-9a868ec53aea" width="200" height="400"/>
-    </div>
-    <div>
-        <h3>Post</h3>
-        <img src="https://github.com/user-attachments/assets/975f093a-7fef-48af-90e1-52698bf739a7" width="400" height="400"/>
-    </div>
-    <div>
-        <h3>Story</h3>
-        <img src="https://github.com/user-attachments/assets/ec02c290-2286-4b4f-b4c3-6b9044a8967f" width="200" height="400"/>
-    </div>
-</div>
-
-
-
-
-
-
-
-
+<table style="border: none; cellpadding: 10;">
+  <tr>
+    <td align="center">
+      <h3>Feed Screen</h3>
+      <img src="https://github.com/user-attachments/assets/09b8dd75-ae67-4061-8396-1e575ee0c2ac" width="200" height="400"/>
+    </td>
+    <td align="center">
+      <h3>Personal Profile Screen</h3>
+      <img src="https://github.com/user-attachments/assets/9f83dc13-d9c5-4c16-902b-9a868ec53aea" width="200" height="400"/>
+    </td>
+    <td align="center">
+      <h3>Post</h3>
+      <img src="https://github.com/user-attachments/assets/975f093a-7fef-48af-90e1-52698bf739a7" width="400" height="400"/>
+    </td>
+    <td align="center">
+      <h3>Story</h3>
+      <img src="https://github.com/user-attachments/assets/ec02c290-2286-4b4f-b4c3-6b9044a8967f" width="200" height="400"/>
+    </td>
+  </tr>
+</table>
 
 Thank you for checking out this project! 🎉
