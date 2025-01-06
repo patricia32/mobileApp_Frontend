@@ -19,7 +19,7 @@ This app aims to provide an interactive experience similar to Instagram's, featu
 - **SQL Database**
 
 ---
-<div style="display: flex; justify-content: space-around;">
+<div style="display: flex; justify-content: space-between;">
     <div>
         <h3>Feed Screen</h3>
         <img src="https://github.com/user-attachments/assets/09b8dd75-ae67-4061-8396-1e575ee0c2ac" width="200" height="400"/>
