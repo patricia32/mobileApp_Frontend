@@ -36,9 +36,36 @@ import ErrorScreen from '../screens/ErrorScreen';
 
     export default function StoriesList({ navigation, loggedInUserID }) {
 
+        const [myStory, setMyStory] = useState([]);
         const [stories, setStories] = useState([]);
-        const [loading, setLoading] = useState(false);
+        const [loading, setLoading] = useState(true);
         const [error, setError] = useState(false)
+
+        const getMyStoryData = async () => {
+            setLoading(true);
+            try {
+                const response = await fetch(`http://192.168.1.129:5000/getUserProfile?username=${loggedInUserID}`);
+                const data = await response.json();
+        
+                if (response.ok) {
+                    const storyDataObject = {
+                        followedUsername: data.username,
+                        profilePicPath: data.profilePicPath,
+                        storyID: data.storyID
+                    }
+
+                    console.log(data.profilePicPath)
+                    setMyStory(storyDataObject);
+                } 
+                else 
+                    setError(data.error || 'An error occurred');  
+                
+            } catch (err) {
+                setError('Network error'); 
+            } finally {
+                setLoading(false);  
+            }
+        }
        
         const getStoryBulletsData = async () =>{
             setLoading(true);
@@ -61,6 +88,7 @@ import ErrorScreen from '../screens/ErrorScreen';
     
         useEffect(() => {
                getStoryBulletsData();
+               getMyStoryData();
             }, []); 
     
             
@@ -74,8 +102,10 @@ import ErrorScreen from '../screens/ErrorScreen';
                 horizontal
                 showsHorizontalScrollIndicator={false}
             >
+                <StoryBullet storyData={myStory} navigation={navigation} loggedInUserID={loggedInUserID} onProfileScreen={false} />
+
                 {stories.map((storyData, index) => {
-                    return <StoryBullet key={index} storyData={storyData} navigation={navigation} loggedInUserID={loggedInUserID}/>
+                    return <StoryBullet key={index} storyData={storyData} navigation={navigation} loggedInUserID={loggedInUserID} onProfileScreen={false}/>
                 })}
                 </ScrollView>
         </View>

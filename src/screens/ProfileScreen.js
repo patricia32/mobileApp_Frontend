@@ -6,6 +6,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import UsersList from "../components/UsersList";
 import LoadingScreen from "./LoadingScreen";
 import ErrorScreen from "./ErrorScreen";
+import StoryBullet from "../components/StoryBullet";
 
 
 
@@ -17,14 +18,13 @@ export default function  ProfileScreen({ navigation, route }) {
         else
         currentProfileUsername = accessedProfileUserID;
 
-    console.log('Profile Screen rendering ', loggedInUserID, accessedProfileUserID);
-
     const [userContent, setUserContent] = useState(null);
     const [userFollowingListLength, setUserFollowingListLength] = useState(null);
     const [userFollowersListLength, setUserFollowersListLength] = useState(null); 
     const [following, setFollowing] = useState(false); 
 
 
+    const [storyData, setStoryData] = useState(null);
     const [posts, setPosts] = useState(null);
 
 
@@ -34,11 +34,41 @@ export default function  ProfileScreen({ navigation, route }) {
     const [error, setError] = useState(null);
 
 
-    const fetchUserProfile = async () => {
-        
+    // Fetch user's following list length 
+    const fetchUserFollowingListLength = async () => {
+        try {
+            const response = await fetch(`http://192.168.1.129:5000/getUserFollowingListLength?username=${currentProfileUsername}`);
+            const dataFollowing = await response.json();
 
-        console.log('fetchUserProfile ', currentProfileUsername);
-        // Fetch user profile data from the server
+            if (response.ok)
+                setUserFollowingListLength(dataFollowing.followingListLength);
+            else
+                setError(dataFollowing.error || 'An error occurred');
+
+        } catch (err) {
+            setError('Network error');
+        }
+    }
+
+    // Fetch user's followers list length 
+    const fetchUserFollowersListLength = async () => {
+        try {
+            const response = await fetch(`http://192.168.1.129:5000/getUserFollowersListLength?username=${currentProfileUsername}`);
+            const dataFollowers = await response.json();
+
+            if (response.ok)
+                setUserFollowersListLength(dataFollowers.followersListLength);
+            else
+                setError(dataFollowers.error || 'An error occurred');
+
+        } catch (err) {
+            setError('Network error');
+        }
+    }
+
+
+    // Fetch user profile data from the server
+    const fetchUserProfile = async () => {
         try {
             const response = await fetch(`http://192.168.1.129:5000/getUserProfile?username=${currentProfileUsername}`);
             const data = await response.json();
@@ -46,36 +76,19 @@ export default function  ProfileScreen({ navigation, route }) {
             if (response.ok) {
                 setUserContent(data);  
 
-                // Fetch user's following list length 
-                try {
-                    const response = await fetch(`http://192.168.1.129:5000/getUserFollowingListLength?username=${currentProfileUsername}`);
-                    const dataFollowing = await response.json();
-
-                    if (response.ok)
-                        setUserFollowingListLength(dataFollowing.followingListLength);
-                    else
-                        setError(dataFollowing.error || 'An error occurred');
-
-                } catch (err) {
-                    setError('Network error');
+                console.log(data);
+                const storyDataObject = {
+                    followedUsername: data.username,
+                    profilePicPath: data.profilePicPath,
+                    storyID: data.storyID
                 }
-
-                // Fetch user's followers list length
-                try {
-                    const response = await fetch(`http://192.168.1.129:5000/getUserFollowersListLength?username=${currentProfileUsername}`);
-                    const dataFollowers = await response.json();
-
-                    if (response.ok)
-                        setUserFollowersListLength(dataFollowers.followersListLength);
-                    else
-                        setError(dataFollowers.error || 'An error occurred');
-
-                } catch (err) {
-                    setError('Network error');
-                }
+                setStoryData(storyDataObject);
 
 
-                // Fetch user posts data from the server
+
+                fetchUserFollowingListLength();
+                fetchUserFollowersListLength();
+
                 try {
                     const response = await fetch(`http://192.168.1.129:5000/getUserPosts_id_and_photoPath?username=${currentProfileUsername}`);
                     const dataPosts = await response.json();
@@ -99,8 +112,12 @@ export default function  ProfileScreen({ navigation, route }) {
         }
     };
 
+    // Checking if logged user follows the accessed profile
     const checkFollowing = async () =>{
-        if(loggedInUserID === accessedProfileUserID) return;
+        if(loggedInUserID === accessedProfileUserID){
+            setLoadingFollow(false);
+            return;
+        }
         setLoadingFollow(true);
         try {
             const response = await fetch(`http://192.168.1.129:5000/user/checkFollowing?usernameFollowing=${loggedInUserID}&usernameFollowed=${accessedProfileUserID}`);
@@ -115,7 +132,6 @@ export default function  ProfileScreen({ navigation, route }) {
         } catch (err) {
             setError('Network error');
         } finally {
-            console.log("is following", following)
             setLoadingFollow(false);
         }
     }
@@ -162,9 +178,7 @@ export default function  ProfileScreen({ navigation, route }) {
         setLoading(true);
     
         try {
-            let response;
-            console.log("last check", following);
-            
+            let response;            
             //API call based on the current follow status
             if (following) { // unfollow
                 response = await fetch(`http://192.168.1.129:5000/user/unFollow`, {
@@ -190,6 +204,7 @@ export default function  ProfileScreen({ navigation, route }) {
                     }),
                 });
            }
+
     
             const data = await response.json();
     
@@ -202,6 +217,7 @@ export default function  ProfileScreen({ navigation, route }) {
         } catch (err) {
             setError('Network error');
         } finally {
+            fetchUserFollowersListLength();
             setLoading(false);
         }
     };
@@ -280,10 +296,7 @@ export default function  ProfileScreen({ navigation, route }) {
 
                         {/* Profile Picture Left Side */}
                         <View style={styles.profilePicArea}>
-                            <Image 
-                                style={styles.profilePic}
-                                source={{ uri:userContent.profilePicPath} }
-                            />
+                            <StoryBullet storyData={storyData} navigation={navigation} loggedInUserID={loggedInUserID} onProfileScreen={true}/>
                         </View>
 
                         {/* Profile Info Right Side */}
@@ -416,12 +429,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
       },
     topAreaContainer: {
-        flex: 0.35,
+        flex: 0.25,
         borderBottomWidth: 0.4, 
         borderColor: '#d3d3d3',
     },
     contentAreaContainer: {
-        flex: 0.65,
+        flex: 0.85,
     },
     header: {
         flex: 0.20,
@@ -458,6 +471,14 @@ const styles = StyleSheet.create({
         marginTop: 7,
         borderRadius: 60,
         backgroundColor: 'lightcoral',
+    },
+    storyCircle: {
+        height: 109,
+        width: 109,
+        borderRadius: 55,
+        margin: 10,
+        borderWidth: 3,
+        borderColor: 'purple',
     },
     profileInfoRightSide: {
         flex: 0.65,

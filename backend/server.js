@@ -73,7 +73,10 @@ app.get('/getUserProfile', (req, res) => {
         return res.status(400).send({ error: 'Username is required' });
     
     const query = `
-       SELECT * FROM users WHERE username = ?;
+       SELECT users.username, users.profilePicPath, stories.storyID
+       FROM users
+       JOIN stories ON stories.userUsername = users.username
+       WHERE username = ?;
     `;
 
     db.query(query, [username], (err, result) => {

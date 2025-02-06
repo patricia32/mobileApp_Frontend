@@ -2,12 +2,16 @@ import React from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
 
 
-export default function StoryBullet({ storyData, navigation, loggedInUserID }) {
+export default function StoryBullet({ storyData, navigation, loggedInUserID, onProfileScreen }) {
 
     const openStory = () => {
-        navigation.navigate('StoryScreen', { storyData, navigation, loggedInUserID }); 
+        navigation.navigate('StoryScreen', {
+            storyData: storyData,
+            loggedInUserID: loggedInUserID,
+            onProfileScreen: onProfileScreen
+        });
+        
     };
-
 
     return (
         <TouchableOpacity onPress={openStory}>
@@ -17,7 +21,11 @@ export default function StoryBullet({ storyData, navigation, loggedInUserID }) {
                         source={{ uri: storyData.profilePicPath }}
                         style={styles.storyUserPhoto}
                         />
-                    <Text style={styles.userName}>{storyData.followedUsername}</Text>
+                    {storyData.followedUsername === loggedInUserID ?  
+                        <Text style={styles.userName}>My story</Text>
+                        :
+                        <Text style={styles.userName}>{storyData.followedUsername}</Text>
+                    }
                 </View>
             </View>
         </TouchableOpacity>

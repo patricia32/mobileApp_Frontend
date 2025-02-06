@@ -9,12 +9,13 @@ import ForwardStoryImage from '../components/ForwardStoryImage';
 import LoadingScreen from './LoadingScreen';
 import ErrorScreen from './ErrorScreen';
 
-export default function StoryScreen({ route, navigation, loggedInUserID }) {
+export default function StoryScreen({ navigation, route }) {
 
 
     ///     LIKED STORY REQUEST         
 
     
+
     const userFriends = [
         {
             id: 1,
@@ -28,7 +29,7 @@ export default function StoryScreen({ route, navigation, loggedInUserID }) {
         },
     ];
     
-    const { storyData } = route.params;
+    const { storyData, loggedInUserID, onProfileScreen } = route.params;
     const [message, setMessage] = useState('');
     const [heartColor, setHeartColor] = useState('black');
     const [currentIndex, setCurrentIndex] = useState(0);  
@@ -77,9 +78,6 @@ export default function StoryScreen({ route, navigation, loggedInUserID }) {
     }, []);
 
 
-   
-   
-
     // Display the previous story image
     const handlePreviousStoryImage = () => {
         Keyboard.dismiss();
@@ -89,12 +87,16 @@ export default function StoryScreen({ route, navigation, loggedInUserID }) {
             setCurrentIndex(currentIndex - 1);
 
         else{
-            setLoading(true);
-            openStoryWithIndex(storyData, navigation, false)
-            setStoryImagesFetched(false);
-            setCurrentIndex(0);
-            setStoryDisplayingTime(3000);
-            setHeartColor('black'); 
+            if(onProfileScreen)
+                navigation.goBack();
+            else{
+                setLoading(true);
+                openStoryWithIndex(storyData, navigation, false)
+                setStoryImagesFetched(false);
+                setCurrentIndex(0);
+                setStoryDisplayingTime(3000);
+                setHeartColor('black'); 
+            }
         }
     };
 
@@ -108,12 +110,16 @@ export default function StoryScreen({ route, navigation, loggedInUserID }) {
             setCurrentIndex(prevItem => prevItem + 1);
         }
         else{
-            setLoading(true); 
-            openStoryWithIndex(storyData, navigation, loggedInUserID, true)
-            setStoryImagesFetched(false);
-            setCurrentIndex(0);
-            setStoryDisplayingTime(3000);
-            setHeartColor('black');
+            if(onProfileScreen)
+                navigation.goBack();
+            else{
+                setLoading(true); 
+                openStoryWithIndex(storyData, navigation, loggedInUserID, true)
+                setStoryImagesFetched(false);
+                setCurrentIndex(0);
+                setStoryDisplayingTime(3000);
+                setHeartColor('black');
+            }
         }
     };
 
@@ -159,6 +165,13 @@ export default function StoryScreen({ route, navigation, loggedInUserID }) {
 
     }, [ currentIndex, storyDisplayingTime, storyImages]);
 
+    const redirectToUserProfile = () => {
+        clearTimeout(timerRef.current);
+
+        console.log("redirect");
+        navigation.navigate('Profile', { loggedInUserID, accessedProfileUserID: storyData.followedUsername });
+    }
+
 
     if (loading) return <LoadingScreen/>;
     if (error) return <ErrorScreen error={error} onGoBack={() => navigation.goBack()} />;
@@ -189,7 +202,7 @@ export default function StoryScreen({ route, navigation, loggedInUserID }) {
 
                 {/* Story header - user data*/}
                 <View style={styles.storyHeader}>
-                    <TouchableOpacity style={styles.storyUserData}>
+                    <TouchableOpacity style={styles.storyUserData} onPress={redirectToUserProfile}>
                         <Image
                             source={{ uri: storyData.profilePicPath }}
                             style={styles.storyUserImage}
